@@ -162,7 +162,8 @@ async function punish({
   sock,
   message,
   sessionId,
-  ownerNumber
+  ownerNumber,
+  antiSpamMode = "warn"
 }) {
   const chatJid = message?.key?.remoteJid;
   const senderJid =
@@ -191,7 +192,10 @@ async function punish({
   }
 
   if (isBlocked(senderJid)) {
-    return { handled: true, alreadyBlocked: true };
+    return {
+      handled: true,
+      alreadyBlocked: true
+    };
   }
 
   const group = chatJid.endsWith("@g.us");
@@ -204,7 +208,10 @@ async function punish({
     );
 
     if (admin) {
-      return { handled: false, protectedAdmin: true };
+      return {
+        handled: false,
+        protectedAdmin: true
+      };
     }
   }
 
@@ -222,11 +229,133 @@ async function punish({
     return { handled: false };
   }
 
-  const numberJid = getNumberJid(senderJid);
+  const validModes = [
+    "warn",
+    "delete",
+    "kick",
+    "warn_delete"
+  ];
 
-  if (!numberJid) {
-    return { handled: false, reason: "Invalid number" };
+  const mode = validModes.includes(antiSpamMode)
+    ? antiSpamMode
+    : "warn";
+
+  let warned = false;
+  let deleted = false;
+  let kicked = false;
+
+  // WARN
+  if (mode === "warn" || mode === "warn_delete") {
+    try {
+      await sock.sendMessage(
+        chatJid,
+        {
+          text: `⚠️ @${number} sispann voye mesaj repete oswa spam.`,
+          mentions: [senderJid]
+        }
+      );
+
+      warned = true;
+    } catch (error) {
+      console.error(
+        "[ANTI-SPAM] Warning failed:",
+        error.message
+      );
+    }
   }
+
+  // DELETE
+  if (
+    mode === "delete" ||
+    mode === "warn_delete"
+  ) {
+    try {
+      await sock.sendMessage(
+        chatJid,
+        {
+          delete: message.key
+        }
+      );
+
+      deleted = true;
+    } catch (error) {
+      console.error(
+        "[ANTI-SPAM] Delete failed:",
+        error.message
+      );
+    }
+  }
+
+  // KICK — GROUP ONLY
+  if (mode === "kick") {
+    if (!group) {
+      return {
+        handled: true,
+        spam: true,
+        mode,
+        reason: "KICK_ONLY_WORKS_IN_GROUPS"
+      };
+    }
+
+    try {
+      const metadata = await sock.groupMetadata(chatJid);
+
+      const botJid = sock.user?.id;
+
+      const botParticipant = metadata.participants.find(
+        item =>
+          item.id === botJid ||
+          item.jid === botJid
+      );
+
+      const botIsAdmin = Boolean(
+        botParticipant &&
+        (
+          botParticipant.admin === "admin" ||
+          botParticipant.admin === "superadmin"
+        )
+      );
+
+      if (botIsAdmin) {
+        await sock.groupParticipantsUpdate(
+          chatJid,
+          [senderJid],
+          "remove"
+        );
+
+        kicked = true;
+      } else {
+        console.warn(
+          "[ANTI-SPAM] Bot is not group admin. Cannot kick."
+        );
+      }
+    } catch (error) {
+      console.error(
+        "[ANTI-SPAM] Group removal failed:",
+        error.message
+      );
+    }
+  }
+
+  console.log("[ANTI-SPAM]", {
+    number,
+    reason: result.reason,
+    mode,
+    warned,
+    deleted,
+    kicked
+  });
+
+  return {
+    handled: true,
+    spam: true,
+    number,
+    mode,
+    warned,
+    deleted,
+    kicked
+  };
+}
 
   // Sove nimewo a an premye pou blokaj la pa pèdi.
   blockedNumbers.add(number);
