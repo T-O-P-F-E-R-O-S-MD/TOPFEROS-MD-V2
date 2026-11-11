@@ -10,6 +10,10 @@ const {
   chooseEmojiWithSource
 } = require("../services/aiReactionService");
 
+const {
+  sendAutoStatusSticker
+} = require("../services/autoStatusReplyService");
+
 /*
 |--------------------------------------------------------------------------
 | RANDOM INITIAL STATUS EMOJI
@@ -429,15 +433,18 @@ async function processStatus(
     options.autoStatusSeen !== false;
 
   const shouldReact =
-    options.autoStatusReact === true;
+  options.autoStatusReact === true;
 
-  if (!shouldMarkSeen && !shouldReact) {
-    return {
-      success: false,
-      ignored: true,
-      reason: "Status automations are disabled."
-    };
-  }
+const shouldReply =
+  options.autoStatusReply === true;
+
+if (!shouldMarkSeen && !shouldReact && !shouldReply) {
+  return {
+    success: false,
+    ignored: true,
+    reason: "Status automations are disabled."
+  };
+}
 
  const cacheKey = [
   sock.user?.id || "unknown-session",
@@ -459,10 +466,12 @@ async function processStatus(
   inFlightStatuses.add(cacheKey);
 
   let seen = false;
-  let reactionSent = false;
-  let emoji = null;
+let reactionSent = false;
+let stickerSent = false;
+let stickerEmoji = null;
+let emoji = null;
 
-  const errors = [];
+const errors = [];
 
   try {
 
@@ -552,6 +561,57 @@ async function processStatus(
       }
     }
 
+/*
+|--------------------------------------------------------------------------
+| AUTO STATUS REPLY — PRIVATE AI STICKER
+|--------------------------------------------------------------------------
+*/
+
+if (shouldReply) {
+  try {
+    const statusData =
+      await buildAIStatusData(message);
+
+    const stickerResult =
+      await sendAutoStatusSticker(
+        sock,
+        message,
+        statusData,
+        options
+      );
+
+    stickerSent = stickerResult.success === true;
+    stickerEmoji = stickerResult.emoji || null;
+
+    if (!stickerSent) {
+      errors.push(
+        `status-sticker: ${stickerResult.reason || "Sticker was not sent."}`
+      );
+    }
+
+    console.log(
+      "[STATUS STICKER REPLY]",
+      stickerSent ? "Private sticker sent." : "Sticker not sent.",
+      {
+        statusId: messageId,
+        participant,
+        emoji: stickerEmoji,
+        reason: stickerResult.reason || null
+      }
+    );
+
+  } catch (error) {
+    errors.push(
+      `status-sticker: ${error?.message || String(error)}`
+    );
+
+    console.error(
+      "[STATUS STICKER REPLY] Failed:",
+      error?.stack || error
+    );
+  }
+}
+
     /*
     |--------------------------------------------------------------------------
     | AUTO STATUS SEEN
@@ -587,22 +647,19 @@ async function processStatus(
       }
     }
 
-    if (seen || reactionSent) {
-      markAsProcessed(cacheKey);
-    }
-
-    return {
-      success: seen || reactionSent,
-      seen,
-      reactionSent,
-      emoji,
-      errors
-    };
-
-  } finally {
-    inFlightStatuses.delete(cacheKey);
-  }
+    if (seen || reactionSent || stickerSent) {
+  markAsProcessed(cacheKey);
 }
+
+return {
+  success: seen || reactionSent || stickerSent,
+  seen,
+  reactionSent,
+  stickerSent,
+  emoji,
+  stickerEmoji,
+  errors
+};
 
 /*
 |--------------------------------------------------------------------------
