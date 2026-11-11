@@ -1059,17 +1059,31 @@ const session = {
   }
 );
 
-  
-  /*
-  |--------------------------------------------------------------------------
-  | TOPFEROS MD V2.0.0
-  | STATUS HANDLER - LIVE AUTOMATION SETTINGS
-  |--------------------------------------------------------------------------
-  */
+/*
+|--------------------------------------------------------------------------
+| TOPFEROS MD V2.0.0
+| STATUS HANDLER - LIVE AUTOMATION SETTINGS
+|--------------------------------------------------------------------------
+*/
 
 const statusOptions = {};
 
 Object.defineProperties(statusOptions, {
+  autoStatusReply: {
+    enumerable: true,
+    get() {
+      const current = activeSessions.get(sessionId);
+      const settings = settingPanel.getSessionSettings(sessionId);
+      const panelValue = settings?.automation?.autoStatusReply;
+
+      if (typeof panelValue === "boolean") {
+        return panelValue;
+      }
+
+      return current?.automation?.autoStatusReply === true;
+    }
+  },
+
   autoStatusReact: {
     enumerable: true,
     get() {
