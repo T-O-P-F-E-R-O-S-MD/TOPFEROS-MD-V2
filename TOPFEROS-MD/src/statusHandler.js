@@ -661,6 +661,31 @@ return {
   errors
 };
 
+  } catch (error) {
+    errors.push(
+      `process-status: ${error?.message || String(error)}`
+    );
+
+    console.error(
+      "[STATUS] Process status failed:",
+      error?.stack || error
+    );
+
+    return {
+      success: seen || reactionSent || stickerSent,
+      seen,
+      reactionSent,
+      stickerSent,
+      emoji,
+      stickerEmoji,
+      errors
+    };
+
+  } finally {
+    inFlightStatuses.delete(cacheKey);
+  }
+}
+
 /*
 |--------------------------------------------------------------------------
 | HANDLE STATUS UPSERT
