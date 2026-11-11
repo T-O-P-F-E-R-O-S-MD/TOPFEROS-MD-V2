@@ -1,3 +1,16 @@
 {
-  "stickers": []
+  "stickers": [
+    {
+      "emoji": "❤️",
+      "file": "love.webp"
+    },
+    {
+      "emoji": "😂",
+      "file": "laugh.webp"
+    },
+    {
+      "emoji": "🔥",
+      "file": "fire.webp"
+    }
+  ]
 }
