@@ -330,11 +330,14 @@ async function sendAutoStatusSticker(
     }
 
     await sock.sendMessage(
-      participant,
-      {
-        sticker: stickerBuffer
-      }
-    );
+  participant,
+  {
+    sticker: stickerBuffer
+  },
+  {
+    quoted: message
+  }
+);
 
     console.log(
       "[AUTO STATUS STICKER] Private sticker sent:",
