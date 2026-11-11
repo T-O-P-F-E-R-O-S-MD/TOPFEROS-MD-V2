@@ -1451,10 +1451,11 @@ try {
     !isOwner(message)
   ) {
     const spamResult = await antiSpam.punish({
-      sock,
-      message,
-      sessionId
-    });
+  sock,
+  message,
+  sessionId,
+  antiSpamMode: spamAutomation.antiSpamMode || "warn"
+});
 
     if (spamResult.handled) {
       return {
