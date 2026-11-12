@@ -482,10 +482,10 @@ antiCallExceptionNumbers: Array.isArray(settings.antiCallExceptionNumbers)
     antiBug: settings.antiBug === true,
 
     antiBotMode: ["groups", "private", "both"].includes(
-      settings.antiBotMode
-    )
-      ? settings.antiBotMode
-      : "groups",
+  settings.antiBotMode
+)
+  ? settings.antiBotMode
+  : "both",
 
     botDetection: settings.botDetection === true,
     autoScan: settings.autoScan === true,
@@ -501,10 +501,12 @@ antiCallExceptionNumbers: Array.isArray(settings.antiCallExceptionNumbers)
   : "Warn",
 
     antiBlockNumbers: Array.isArray(settings.antiBlockNumbers)
-      ? settings.antiBlockNumbers
-      : []
-  };
-}
+  ? [...new Set(
+      settings.antiBlockNumbers
+        .map(value => String(value || "").replace(/\D/g, ""))
+        .filter(Boolean)
+    )].slice(0, 100)
+  : []
 
   function normalizeBot(settings = {}) {
     return {
@@ -885,27 +887,23 @@ autoReactEmojis: (() => {
         ),
 
       // ANTI-BOT SETTINGS
+antiBotFilter: Boolean(getFieldValue("antiBotFilter")),
 
-antiBotFilter:
-  Boolean(getFieldValue("antiBotFilter")),
+antiBotMode: ["groups", "private", "both"].includes(
+  getFieldValue("antiBotMode", "both")
+) ? getFieldValue("antiBotMode", "both") : "both",
 
-antiBotMode:
-  getFieldValue("antiBotMode", "groups"),
+botDetection: Boolean(getFieldValue("botDetection")),
+autoScan: Boolean(getFieldValue("autoScan")),
+botScore: Boolean(getFieldValue("botScore")),
+adminNotification: Boolean(getFieldValue("adminNotification")),
+autoKick: Boolean(getFieldValue("autoKick")),
 
-botDetection:
-  Boolean(getFieldValue("botDetection")),
+antiBotAction: ["Delete", "Warn", "Block"].includes(
+  getFieldValue("antiBotAction", "Warn")
+) ? getFieldValue("antiBotAction", "Warn") : "Warn",
 
-autoScan:
-  Boolean(getFieldValue("autoScan")),
-
-botScore:
-  Boolean(getFieldValue("botScore")),
-
-adminNotification:
-  Boolean(getFieldValue("adminNotification")),
-
-autoKick:
-  Boolean(getFieldValue("autoKick")),
+antiBlockNumbers
 
       antiDeleteMode:
         getFieldValue(
