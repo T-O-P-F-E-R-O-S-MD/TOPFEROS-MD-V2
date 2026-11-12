@@ -9,6 +9,10 @@ const {
   registerCommand
 } = require("../src/messageHandler");
 
+const {
+  isBotGroupAdmin
+} = require("../services/groupAdmin");
+
 function normalizeJid(jid) {
   if (!jid) {
     return "";
