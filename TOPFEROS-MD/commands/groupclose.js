@@ -119,11 +119,13 @@ async function closeCommand(ctx) {
     };
   }
 
-  const botJid =
-    ctx.sock?.user?.id ||
-    "";
+  const botIsAdmin =
+    await isBotGroupAdmin(
+      ctx.sock,
+      metadata
+    );
 
-  if (!isAdmin(metadata, botJid)) {
+  if (!botIsAdmin) {
     await ctx.send(
       [
         "❌ BOT MUST BE ADMIN",
