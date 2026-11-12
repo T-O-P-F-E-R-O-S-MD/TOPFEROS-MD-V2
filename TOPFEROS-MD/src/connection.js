@@ -213,6 +213,12 @@ function getDefaultAutomationSettings() {
 
     antiCall:
       automation.antiCall === true,
+antiCallExceptionNumbers:
+  Array.isArray(automation.antiCallExceptionNumbers)
+    ? automation.antiCallExceptionNumbers
+        .map(value => String(value || "").replace(/\D/g, ""))
+        .filter(Boolean)
+    : [],
 
     antiBug:
       automation.antiBug === true,
@@ -424,6 +430,16 @@ function updateSessionAutomation(
 
   session.automation.antiCall =
     session.automation.antiCall === true;
+session.automation.antiCallExceptionNumbers =
+  Array.isArray(session.automation.antiCallExceptionNumbers)
+    ? [
+        ...new Set(
+          session.automation.antiCallExceptionNumbers
+            .map(value => String(value || "").replace(/\D/g, ""))
+            .filter(Boolean)
+        )
+      ].slice(0, 100)
+    : [];
 
   session.automation.antiBug =
     session.automation.antiBug === true;
