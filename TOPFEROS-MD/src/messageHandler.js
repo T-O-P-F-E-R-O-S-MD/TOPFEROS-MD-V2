@@ -38,6 +38,9 @@ const {
   isUnsafeMessageStructure
 } = require("../services/antiBug");
 
+const groupPrinciplesService =
+  require("../services/groupPrinciples");
+
 // 🦁 TOPFEROS MD V2.0.0
 // VV2 COMMAND CONNECTION
 
@@ -1414,6 +1417,57 @@ async function handleMessageCore(sock, message, sessionId) {
     }
 
     const jid = getChatJid(message);
+
+/*
+|--------------------------------------------------------------------------
+| GROUP BIO / PRINCIPLES + VIOLATION LIMIT
+|--------------------------------------------------------------------------
+*/
+
+try {
+  if (
+    isGroup(jid) &&
+    !message?.key?.fromMe
+  ) {
+    const groupSettings =
+      settingPanel.getSessionSettings(sessionId) || {};
+
+    const groupAutomation =
+      groupSettings.groupAutomation || {};
+
+    const groupText =
+      extractMessageText(message.message);
+
+    if (
+      groupText &&
+      groupAutomation.principles
+    ) {
+      const moderationResult =
+        await groupPrinciplesService.handleGroupPrinciples({
+          sock,
+          message,
+          sessionId,
+          settings: groupAutomation,
+          messageText: groupText
+        });
+
+      if (moderationResult?.handled) {
+        return {
+          success: true,
+          ignored: true,
+          command: "group-principles",
+          result: moderationResult,
+          sessionId: sessionId || null
+        };
+      }
+    }
+  }
+} catch (error) {
+  console.error(
+    "[GROUP PRINCIPLES CONNECTION]",
+    error?.stack || error
+  );
+}
 
     // CONTINUE WITH THE REST OF YOUR ORIGINAL CODE HERE.
 
