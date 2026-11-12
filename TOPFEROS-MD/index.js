@@ -13,6 +13,9 @@ const {
 const connection = require("./src/connection");
 const sessionManager = require("./src/sessionManager");
 
+const groupScheduler =
+  require("./services/groupScheduler");
+
 const loadCommands = require("./commands");
 
 const logger = pino({
@@ -113,6 +116,7 @@ async function shutdown(signal) {
   );
 
   try {
+groupScheduler.stop();
     await connection.disconnectAllSessions();
 
     logger.info(
@@ -173,6 +177,7 @@ logger.info(
 );
 
     await restoreSessions();
+    groupScheduler.start();
 
     logger.info(
       "🦁 TOPFEROS MD V2.0.0 startup completed."
