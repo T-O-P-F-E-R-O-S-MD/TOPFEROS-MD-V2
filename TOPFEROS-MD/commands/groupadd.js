@@ -113,35 +113,6 @@ function getTarget(ctx) {
 
 /*
 |--------------------------------------------------------------------------
-| CHECK BOT ADMIN
-|--------------------------------------------------------------------------
-*/
-
-function isBotAdmin(
-  metadata,
-  botJid
-) {
-  const normalizedBot =
-    normalizeJid(
-      botJid
-    );
-
-  return Boolean(
-    metadata?.participants?.some(
-      (participant) =>
-        normalizeJid(
-          participant?.id
-        ) === normalizedBot &&
-        (
-          participant?.admin === "admin" ||
-          participant?.admin === "superadmin"
-        )
-    )
-  );
-}
-
-/*
-|--------------------------------------------------------------------------
 | CHECK EXISTING MEMBER
 |--------------------------------------------------------------------------
 */
@@ -234,16 +205,13 @@ async function addCommand(ctx) {
    * Check bot admin status.
    */
 
-  const botJid =
-    ctx.sock?.user?.id ||
-    "";
+   const botIsAdmin =
+    await isBotGroupAdmin(
+      ctx.sock,
+      metadata
+    );
 
-  if (
-    !isBotAdmin(
-      metadata,
-      botJid
-    )
-  ) {
+  if (!botIsAdmin) {
     await ctx.send(
       [
         "❌ BOT IS NOT ADMIN",
