@@ -884,12 +884,28 @@ autoReactEmojis: (() => {
           )
         ),
 
-      antiBotFilter:
-        Boolean(
-          getFieldValue(
-            "antiBotFilter"
-          )
-        ),
+      // ANTI-BOT SETTINGS
+
+antiBotFilter:
+  Boolean(getFieldValue("antiBotFilter")),
+
+antiBotMode:
+  getFieldValue("antiBotMode", "groups"),
+
+botDetection:
+  Boolean(getFieldValue("botDetection")),
+
+autoScan:
+  Boolean(getFieldValue("autoScan")),
+
+botScore:
+  Boolean(getFieldValue("botScore")),
+
+adminNotification:
+  Boolean(getFieldValue("adminNotification")),
+
+autoKick:
+  Boolean(getFieldValue("autoKick")),
 
       antiDeleteMode:
         getFieldValue(
