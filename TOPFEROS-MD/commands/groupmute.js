@@ -107,29 +107,27 @@ async function muteCommand(ctx) {
           ) === botJid
     );
 
-  const botIsAdmin =
-    botParticipant?.admin ===
-      "admin" ||
-    botParticipant?.admin ===
-      "superadmin";
+ const botIsAdmin = await isBotGroupAdmin(
+  ctx.sock,
+  metadata
+);
 
-  if (!botIsAdmin) {
-    await ctx.send(
-      [
-        "❌ BOT IS NOT ADMIN",
-        "",
-        "I need to be a group admin to mute the group.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
-    );
+if (!botIsAdmin) {
+  await ctx.send(
+    [
+      "❌ BOT IS NOT ADMIN",
+      "",
+      "I need to be a group admin to perform this action.",
+      "",
+      "🦁 TECH BY TOPFEROS MD 🐑"
+    ].join("\n")
+  );
 
-    return {
-      success: false,
-      reason:
-        "Bot is not a group admin."
-    };
-  }
+  return {
+    success: false,
+    reason: "Bot is not a group admin."
+  };
+}
 
   /*
    * Change group setting:
