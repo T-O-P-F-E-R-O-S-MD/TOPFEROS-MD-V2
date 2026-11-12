@@ -64,31 +64,6 @@ function getJidAliases(user) {
 
 /*
 |--------------------------------------------------------------------------
-| CHECK ADMIN
-|--------------------------------------------------------------------------
-*/
-
-function isAdmin(metadata, jid) {
-  const userAliases = getJidAliases(jid);
-
-  if (!userAliases.length) return false;
-
-  const participant = metadata?.participants?.find(item => {
-    const participantAliases = getJidAliases(item);
-
-    return participantAliases.some(alias =>
-      userAliases.includes(alias)
-    );
-  });
-
-  return (
-    participant?.admin === "admin" ||
-    participant?.admin === "superadmin"
-  );
-}
-
-/*
-|--------------------------------------------------------------------------
 | OPEN COMMAND
 |--------------------------------------------------------------------------
 */
