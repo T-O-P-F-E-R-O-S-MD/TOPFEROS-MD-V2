@@ -290,17 +290,18 @@ async function kickCommand(ctx) {
     ctx.sock?.user?.id ||
     "";
 
-  if (
-    !isBotAdmin(
-      metadata,
-      botJid
-    )
-  ) {
+  const botIsAdmin =
+    await isBotGroupAdmin(
+      ctx.sock,
+      metadata
+    );
+
+  if (!botIsAdmin) {
     await ctx.send(
       [
         "❌ BOT IS NOT ADMIN",
         "",
-        "I need to be a group admin to remove members.",
+        "I need to be a group admin to add members.",
         "",
         "🦁 TECH BY TOPFEROS MD 🐑"
       ].join("\n")
