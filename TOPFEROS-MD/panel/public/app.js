@@ -494,11 +494,11 @@ antiCallExceptionNumbers: Array.isArray(settings.antiCallExceptionNumbers)
     autoKick: settings.autoKick === true,
     antiBotFilter: settings.antiBotFilter === true,
 
-    antiBotAction: ["Delete", "Warn", "Kick"].includes(
-      settings.antiBotAction
-    )
-      ? settings.antiBotAction
-      : "Delete",
+    antiBotAction: ["Delete", "Warn", "Block"].includes(
+  settings.antiBotAction
+)
+  ? settings.antiBotAction
+  : "Warn",
 
     antiBlockNumbers: Array.isArray(settings.antiBlockNumbers)
       ? settings.antiBlockNumbers
