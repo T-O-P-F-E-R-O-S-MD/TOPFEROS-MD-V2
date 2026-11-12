@@ -176,12 +176,6 @@ async function openCommand(ctx) {
     };
   }
 
-    return {
-      success: false,
-      reason: "Bot is not recognized as a group admin."
-    };
-  }
-
   /*
    * Allow all participants to send messages.
    */
