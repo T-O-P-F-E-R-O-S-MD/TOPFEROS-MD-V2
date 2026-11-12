@@ -862,36 +862,35 @@ autoReactEmojis: (() => {
         Boolean(getFieldValue("autoKick")),
 
       antiBotMode: ["groups", "private", "both"].includes(
-  getFieldValue("antiBotMode", "groups")
-)
-  ? getFieldValue("antiBotMode", "groups")
-  : "groups",
+        getFieldValue("antiBotMode", "groups")
+      )
+        ? getFieldValue("antiBotMode", "groups")
+        : "groups",
 
-            antiCall:
-        Boolean(
-          getFieldValue("antiCall")
-        ),
+      antiCall: Boolean(
+        getFieldValue("antiCall")
+      ),
 
       antiCallExceptionNumbers,
-    )
-  ),
 
-      antiBug:
-        Boolean(
-          getFieldValue(
-            "antiBug"
-          )
-        ),
+      antiBug: Boolean(
+        getFieldValue("antiBug")
+      ),
+
       // ANTI-BOT SETTINGS
-      antiBotFilter:
-        Boolean(getFieldValue("antiBotFilter")),
+      antiBotFilter: Boolean(
+        getFieldValue("antiBotFilter")
+      ),
 
-      antiBotAction:
-        ["Delete", "Warn", "Block"].includes(
-          getFieldValue("antiBotAction", "Warn")
-        )
-          ? getFieldValue("antiBotAction", "Warn")
-          : "Warn",
+      antiBotAction: ["Delete", "Warn", "Block"].includes(
+        getFieldValue("antiBotAction", "Warn")
+      )
+        ? getFieldValue("antiBotAction", "Warn")
+        : "Warn",
+
+      antiBlockNumbers
+    };
+  }
 
   function collectGroupSettings() {
     const warningLimit =
