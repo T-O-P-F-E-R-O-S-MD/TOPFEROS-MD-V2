@@ -173,47 +173,33 @@ async function openCommand(ctx) {
     };
   }
 
-  /*
+    /*
    * Check bot admin status.
-   * Support ID, LID and phone number.
    */
 
-  const botUser = ctx.sock?.user;
-
-  const botAliases = getJidAliases(botUser);
-
-  if (!isAdmin(metadata, botAliases)) {
-
-    console.error("[OPEN] Bot admin verification failed.");
-
-    console.error(
-      "[OPEN] Bot aliases:",
-      botAliases
+  const botIsAdmin =
+    await isBotGroupAdmin(
+      ctx.sock,
+      metadata
     );
 
-    console.error(
-      "[OPEN] Admin participants:",
-      metadata.participants
-        ?.filter(item => item.admin)
-        .map(item => ({
-          id: item.id,
-          lid: item.lid,
-          phoneNumber: item.phoneNumber,
-          admin: item.admin
-        }))
-    );
-
+  if (!botIsAdmin) {
     await ctx.send(
       [
         "❌ BOT IS NOT ADMIN",
         "",
         "I need to be a group admin to open the group.",
         "",
-        "Please verify my WhatsApp admin permissions.",
-        "",
         "🦁 TECH BY TOPFEROS MD 🐑"
       ].join("\n")
     );
+
+    return {
+      success: false,
+      reason:
+        "Bot is not a group admin."
+    };
+  }
 
     return {
       success: false,
