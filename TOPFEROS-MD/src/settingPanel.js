@@ -662,9 +662,9 @@ antiCallExceptionNumbers:
       source.autoKick === true,
 
     antiBotAction:
-      ["Delete", "Warn", "Block"].includes(source.antiBotAction)
-        ? source.antiBotAction
-        : "Delete",
+  ["Delete", "Warn", "Block"].includes(source.antiBotAction)
+    ? source.antiBotAction
+    : "Warn",
 
     antiBlockNumbers:
       cleanNumberList(
