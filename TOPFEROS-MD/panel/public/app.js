@@ -574,6 +574,45 @@ function normalizeBot(settings = {}) {
     };
   }
 
+  function fillGroupSettings(settings = {}) {
+    const data = normalizeGroupAutomation(settings);
+
+    setFieldValue(
+      "groupAutomationEnabled",
+      data.enabled
+    );
+
+    setFieldValue(
+      "groupGid",
+      data.groupGid
+    );
+
+    setFieldValue(
+      "timezone",
+      data.timezone
+    );
+
+    setFieldValue(
+      "closeTime",
+      data.closeTime
+    );
+
+    setFieldValue(
+      "openTime",
+      data.openTime
+    );
+
+    setFieldValue(
+      "groupPrinciples",
+      data.principles
+    );
+
+    setFieldValue(
+      "warningLimit",
+      data.warningLimit
+    );
+  }
+
   function fillBotSettings(bot = {}) {
     const data = normalizeBot(bot);
 
