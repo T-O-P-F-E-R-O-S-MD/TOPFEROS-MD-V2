@@ -91,7 +91,19 @@ function checkSpam(key, text) {
     record = {
       timestamps: [],
       lastText: "",
-      repeatCount: 0
+      repeatCount: 0,
+      cooldownUntil: 0
+    };
+  }
+
+  // Cooldown protection
+  if (record.cooldownUntil > now) {
+    history.set(key, record);
+
+    return {
+      spam: true,
+      reason: "COOLDOWN",
+      suppressWarning: true
     };
   }
 
@@ -114,21 +126,28 @@ function checkSpam(key, text) {
   }
 
   record.timestamps.push(now);
-  history.set(key, record);
 
   const flood = record.timestamps.length > MAX_MESSAGES;
+
   const repeated =
     normalizedText.length > 0 &&
     record.repeatCount >= MAX_REPEATS;
 
   if (flood || repeated) {
-    history.delete(key);
+    record.cooldownUntil = now + COOLDOWN_MS;
+    record.timestamps = [];
+    record.repeatCount = 0;
+
+    history.set(key, record);
 
     return {
       spam: true,
-      reason: flood ? "FLOOD" : "REPEATED_MESSAGE"
+      reason: flood ? "FLOOD" : "REPEATED_MESSAGE",
+      suppressWarning: false
     };
   }
+
+  history.set(key, record);
 
   return { spam: false };
 }
@@ -170,18 +189,33 @@ async function punish({
     message?.key?.participant || chatJid;
 
   if (
-    !sock ||
-    !chatJid ||
-    !senderJid ||
-    message?.key?.fromMe ||
-    senderJid.endsWith("@lid")
-  ) {
-    return { handled: false };
-  }
+  !sock ||
+  !chatJid ||
+  !senderJid ||
+  message?.key?.fromMe
+) {
+  return { handled: false };
+}
 
-  const number = normalizeNumber(senderJid);
-  const botNumber = normalizeNumber(sock.user?.id);
-  const owner = normalizeNumber(ownerNumber);
+  const number = normalizeNumber(
+  message?.key?.participantAlt ||
+  message?.key?.remoteJidAlt ||
+  senderJid
+);
+
+const botNumber = normalizeNumber(sock.user?.id);
+const owner = normalizeNumber(ownerNumber);
+
+const senderIdentity = String(senderJid).toLowerCase();
+const botIdentity = String(sock.user?.id || "").toLowerCase();
+
+if (
+  senderIdentity === botIdentity ||
+  (number && number === botNumber) ||
+  (owner && number === owner)
+) {
+  return { handled: false };
+}
 
   if (
     !number ||
