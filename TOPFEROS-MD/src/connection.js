@@ -1543,14 +1543,44 @@ if (
           continue;
         }
 
-        await sock.rejectCall(
-          call.id,
-          call.from
-        );
+        // 1. Rejte apèl la
+await sock.rejectCall(
+  call.id,
+  call.from
+);
 
-        logger.info(
-          `[${sessionId}] Anti Call: apèl antre a rejte.`
-        );
+logger.info(
+  `[${sessionId}] Anti Call: apèl antre a rejte.`
+);
+
+// 2. Bloke moun ki rele a sou WhatsApp
+if (typeof sock.updateBlockStatus === "function") {
+  try {
+    await sock.updateBlockStatus(
+      call.from,
+      "block"
+    );
+
+    logger.info(
+      `[${sessionId}] Anti Call: moun ki rele a bloke otomatikman.`
+    );
+
+  } catch (blockError) {
+    logger.error(
+      {
+        error:
+          blockError?.stack ||
+          blockError?.message ||
+          String(blockError)
+      },
+      `[${sessionId}] Anti Call: echèk blokaj otomatik.`
+    );
+  }
+} else {
+  logger.warn(
+    `[${sessionId}] Anti Call: updateBlockStatus pa disponib.`
+  );
+}
       } catch (error) {
         logger.error(
           {
