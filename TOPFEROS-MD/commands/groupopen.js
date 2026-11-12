@@ -36,6 +36,24 @@ function normalizeJid(jid) {
   return value;
 }
 
+function isAdmin(metadata, jid) {
+  const target = normalizeJid(jid);
+
+  return Boolean(
+    metadata?.participants?.some((participant) => {
+      const participantJid =
+        normalizeJid(participant?.id);
+
+      return (
+        participantJid === target &&
+        (
+          participant?.admin === "admin" ||
+          participant?.admin === "superadmin"
+        )
+      );
+    })
+  );
+}
 /*
 |--------------------------------------------------------------------------
 | GET JID ALIASES
