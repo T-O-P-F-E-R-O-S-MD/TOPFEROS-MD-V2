@@ -627,6 +627,13 @@ statusReplyEmojis: (() => {
     antiCall:
       source.antiCall ?? defaults.antiCall ?? false,
 
+antiCallExceptionNumbers:
+  cleanNumberList(
+    source.antiCallExceptionNumbers ??
+    defaults.antiCallExceptionNumbers ??
+    []
+  ).slice(0, 100),
+
     antiBug:
       source.antiBug ?? defaults.antiBug ?? false,
 
