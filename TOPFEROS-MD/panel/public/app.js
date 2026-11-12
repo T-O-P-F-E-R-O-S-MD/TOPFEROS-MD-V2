@@ -505,10 +505,12 @@ antiCallExceptionNumbers: Array.isArray(settings.antiCallExceptionNumbers)
       settings.antiBlockNumbers
         .map(value => String(value || "").replace(/\D/g, ""))
         .filter(Boolean)
-    )].slice(0, 100)
+        )].slice(0, 100)
   : []
+  };
+}
 
-  function normalizeBot(settings = {}) {
+function normalizeBot(settings = {}) {
     return {
       ownerNumber:
         settings.ownerNumber || "",
@@ -871,13 +873,8 @@ autoReactEmojis: (() => {
         ),
 
       antiCallExceptionNumbers,
-
-            antiCall:
-        Boolean(
-          getFieldValue(
-            "antiCall"
-          )
-        ),
+    )
+  ),
 
       antiBug:
         Boolean(
@@ -885,41 +882,16 @@ autoReactEmojis: (() => {
             "antiBug"
           )
         ),
-
       // ANTI-BOT SETTINGS
-antiBotFilter: Boolean(getFieldValue("antiBotFilter")),
-
-antiBotMode: ["groups", "private", "both"].includes(
-  getFieldValue("antiBotMode", "both")
-) ? getFieldValue("antiBotMode", "both") : "both",
-
-botDetection: Boolean(getFieldValue("botDetection")),
-autoScan: Boolean(getFieldValue("autoScan")),
-botScore: Boolean(getFieldValue("botScore")),
-adminNotification: Boolean(getFieldValue("adminNotification")),
-autoKick: Boolean(getFieldValue("autoKick")),
-
-antiBotAction: ["Delete", "Warn", "Block"].includes(
-  getFieldValue("antiBotAction", "Warn")
-) ? getFieldValue("antiBotAction", "Warn") : "Warn",
-
-antiBlockNumbers
-
-      antiDeleteMode:
-        getFieldValue(
-          "antiDeleteMode",
-          "private"
-        ),
+      antiBotFilter:
+        Boolean(getFieldValue("antiBotFilter")),
 
       antiBotAction:
-        getFieldValue(
-          "antiBotAction",
-          "Delete"
-        ),
-
-      antiBlockNumbers
-    };
-  }
+        ["Delete", "Warn", "Block"].includes(
+          getFieldValue("antiBotAction", "Warn")
+        )
+          ? getFieldValue("antiBotAction", "Warn")
+          : "Warn",
 
   function collectGroupSettings() {
     const warningLimit =
