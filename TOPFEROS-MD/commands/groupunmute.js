@@ -9,6 +9,10 @@ const {
   registerCommand
 } = require("../src/messageHandler");
 
+const {
+  isBotGroupAdmin
+} = require("../services/groupAdmin");
+
 /*
 |--------------------------------------------------------------------------
 | UNMUTE COMMAND
