@@ -1,3 +1,4 @@
+
 "use strict";
 
 // ╔════════════════════════════════════════════════════╗
@@ -16,13 +17,45 @@ const {
 */
 
 function normalizeJid(jid) {
-  if (!jid) {
-    return "";
+  if (!jid) return "";
+
+  let value = String(jid).trim().toLowerCase();
+
+  // Remove device ID
+  value = value.replace(/:\d+(?=@)/, "");
+
+  // Convert plain phone number to WhatsApp JID
+  if (/^\+?\d+$/.test(value)) {
+    value = value.replace(/^\+/, "") + "@s.whatsapp.net";
   }
 
-  return String(jid)
-    .trim()
-    .replace(/:\d+(?=@)/, "");
+  return value;
+}
+
+/*
+|--------------------------------------------------------------------------
+| GET JID ALIASES
+|--------------------------------------------------------------------------
+*/
+
+function getJidAliases(user) {
+  if (!user) return [];
+
+  const values = [
+    user,
+    typeof user === "object" ? user.id : null,
+    typeof user === "object" ? user.lid : null,
+    typeof user === "object" ? user.jid : null,
+    typeof user === "object" ? user.phoneNumber : null
+  ];
+
+  return [
+    ...new Set(
+      values
+        .map(normalizeJid)
+        .filter(Boolean)
+    )
+  ];
 }
 
 /*
@@ -31,26 +64,22 @@ function normalizeJid(jid) {
 |--------------------------------------------------------------------------
 */
 
-function isAdmin(
-  metadata,
-  jid
-) {
-  const normalizedJid =
-    normalizeJid(jid);
+function isAdmin(metadata, jid) {
+  const userAliases = getJidAliases(jid);
 
-  const participant =
-    metadata?.participants?.find(
-      (item) =>
-        normalizeJid(
-          item?.id
-        ) === normalizedJid
+  if (!userAliases.length) return false;
+
+  const participant = metadata?.participants?.find(item => {
+    const participantAliases = getJidAliases(item);
+
+    return participantAliases.some(alias =>
+      userAliases.includes(alias)
     );
+  });
 
   return (
-    participant?.admin ===
-      "admin" ||
-    participant?.admin ===
-      "superadmin"
+    participant?.admin === "admin" ||
+    participant?.admin === "superadmin"
   );
 }
 
@@ -61,6 +90,7 @@ function isAdmin(
 */
 
 async function openCommand(ctx) {
+
   /*
    * Group only.
    */
@@ -78,8 +108,7 @@ async function openCommand(ctx) {
 
     return {
       success: false,
-      reason:
-        "Command used outside a group."
+      reason: "Command used outside a group."
     };
   }
 
@@ -90,15 +119,12 @@ async function openCommand(ctx) {
   let metadata;
 
   try {
-    metadata =
-      await ctx.sock.groupMetadata(
-        ctx.jid
-      );
+    metadata = await ctx.sock.groupMetadata(ctx.jid);
+
   } catch (error) {
     console.error(
       "[OPEN] Group metadata error:",
-      error?.stack ||
-        error
+      error?.stack || error
     );
 
     await ctx.send(
@@ -113,9 +139,7 @@ async function openCommand(ctx) {
 
     return {
       success: false,
-      error:
-        error?.message ||
-        String(error)
+      error: error?.message || String(error)
     };
   }
 
@@ -128,12 +152,7 @@ async function openCommand(ctx) {
     ctx.message?.key?.participant ||
     "";
 
-  if (
-    !isAdmin(
-      metadata,
-      sender
-    )
-  ) {
+  if (!isAdmin(metadata, sender)) {
     await ctx.send(
       [
         "❌ ADMIN ONLY",
@@ -146,30 +165,47 @@ async function openCommand(ctx) {
 
     return {
       success: false,
-      reason:
-        "Sender is not a group admin."
+      reason: "Sender is not a group admin."
     };
   }
 
   /*
    * Check bot admin status.
+   * Support ID, LID and phone number.
    */
 
-  const botJid =
-    ctx.sock?.user?.id ||
-    "";
+  const botUser = ctx.sock?.user;
 
-  if (
-    !isAdmin(
-      metadata,
-      botJid
-    )
-  ) {
+  const botAliases = getJidAliases(botUser);
+
+  if (!isAdmin(metadata, botAliases)) {
+
+    console.error("[OPEN] Bot admin verification failed.");
+
+    console.error(
+      "[OPEN] Bot aliases:",
+      botAliases
+    );
+
+    console.error(
+      "[OPEN] Admin participants:",
+      metadata.participants
+        ?.filter(item => item.admin)
+        .map(item => ({
+          id: item.id,
+          lid: item.lid,
+          phoneNumber: item.phoneNumber,
+          admin: item.admin
+        }))
+    );
+
     await ctx.send(
       [
         "❌ BOT IS NOT ADMIN",
         "",
         "I need to be a group admin to open the group.",
+        "",
+        "Please verify my WhatsApp admin permissions.",
         "",
         "🦁 TECH BY TOPFEROS MD 🐑"
       ].join("\n")
@@ -177,8 +213,7 @@ async function openCommand(ctx) {
 
     return {
       success: false,
-      reason:
-        "Bot is not a group admin."
+      reason: "Bot is not recognized as a group admin."
     };
   }
 
@@ -191,11 +226,11 @@ async function openCommand(ctx) {
       ctx.jid,
       "not_announcement"
     );
+
   } catch (error) {
     console.error(
       "[OPEN] Group setting update error:",
-      error?.stack ||
-        error
+      error?.stack || error
     );
 
     await ctx.send(
@@ -212,9 +247,7 @@ async function openCommand(ctx) {
 
     return {
       success: false,
-      error:
-        error?.message ||
-        String(error)
+      error: error?.message || String(error)
     };
   }
 
@@ -239,8 +272,7 @@ async function openCommand(ctx) {
 
   return {
     success: true,
-    mode:
-      "all-members"
+    mode: "all-members"
   };
 }
 
