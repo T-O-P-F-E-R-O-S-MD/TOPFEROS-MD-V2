@@ -863,12 +863,12 @@ autoReactEmojis: (() => {
   ? getFieldValue("antiBotMode", "groups")
   : "groups",
 
-      antiDelete:
+            antiCall:
         Boolean(
-          getFieldValue(
-            "antiDelete"
-          )
+          getFieldValue("antiCall")
         ),
+
+      antiCallExceptionNumbers,
 
             antiCall:
         Boolean(
