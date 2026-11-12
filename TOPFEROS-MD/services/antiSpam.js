@@ -218,12 +218,12 @@ if (
 }
 
   if (
-    !number ||
-    number === botNumber ||
-    (owner && number === owner)
-  ) {
-    return { handled: false };
-  }
+  (!number && !senderJid.endsWith("@lid")) ||
+  (number && number === botNumber) ||
+  (owner && number === owner)
+) {
+  return { handled: false };
+}
 
   if (isBlocked(senderJid)) {
     return {
