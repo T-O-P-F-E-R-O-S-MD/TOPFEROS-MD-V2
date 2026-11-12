@@ -1357,17 +1357,12 @@ async function stopAutoPresence(sock, jid, presence) {
 
 async function handleMessageCore(sock, message, sessionId) {
   try {
-    /*
-     * Validate socket and message.
-     */
     if (!sock || !message) {
       return {
         success: false,
         reason: "Invalid message."
       };
     }
-
-    rememberMessageKey(message, sessionId);
 
     /*
     |--------------------------------------------------------------------------
@@ -1399,6 +1394,8 @@ async function handleMessageCore(sock, message, sessionId) {
       );
     }
 
+    rememberMessageKey(message, sessionId);
+
     /*
     |--------------------------------------------------------------------------
     | IGNORE BOT MESSAGES
@@ -1417,6 +1414,8 @@ async function handleMessageCore(sock, message, sessionId) {
     }
 
     const jid = getChatJid(message);
+
+    // CONTINUE WITH THE REST OF YOUR ORIGINAL CODE HERE.
 
     /*
     |--------------------------------------------------------------------------
