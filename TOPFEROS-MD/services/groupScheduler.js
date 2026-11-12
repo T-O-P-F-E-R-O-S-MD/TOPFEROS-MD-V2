@@ -19,10 +19,15 @@ function extractInviteCode(link) {
 }
 
 function getTimeParts(timezone) {
+  const timezoneValue =
+    timezone === "Atlantic/Port-au-Prince"
+      ? "America/Port-au-Prince"
+      : timezone || "America/Port-au-Prince";
+
   const parts = new Intl.DateTimeFormat(
     "en-US",
     {
-      timeZone: timezone || "Atlantic/Port-au-Prince",
+      timeZone: timezoneValue,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
