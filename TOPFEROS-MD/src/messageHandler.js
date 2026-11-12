@@ -1462,8 +1462,8 @@ try {
         success: false,
         ignored: true,
         reason: spamResult.spam
-          ? "Anti-Spam: user blocked."
-          : "Anti-Spam: sender already blocked.",
+  ? `Anti-Spam: ${spamResult.mode || "warn"} applied.`
+  : "Anti-Spam: sender already blocked.",
         antiSpam: spamResult,
         sessionId: sessionId || null
       };
