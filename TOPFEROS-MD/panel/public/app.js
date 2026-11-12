@@ -876,11 +876,6 @@ autoReactEmojis: (() => {
             "antiCall"
           )
 
-      antiCall:
-        Boolean(
-          getFieldValue("antiCall")
-        ),
-
       antiBug:
         Boolean(
           getFieldValue(
