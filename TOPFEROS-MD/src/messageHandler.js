@@ -1445,7 +1445,7 @@ try {
     spamSettings.automation || {};
 
   if (
-    spamAutomation.antiSpam !== false &&
+    spamAutomation.antiSpam === true &&
     !message?.key?.fromMe &&
     !isFromBot(message, sock) &&
     !isOwner(message)
