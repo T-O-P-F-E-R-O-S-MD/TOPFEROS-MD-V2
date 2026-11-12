@@ -31,35 +31,6 @@ function normalizeJid(jid) {
 
 /*
 |--------------------------------------------------------------------------
-| CHECK BOT ADMIN
-|--------------------------------------------------------------------------
-*/
-
-function isBotAdmin(
-  metadata,
-  botJid
-) {
-  const normalizedBot =
-    normalizeJid(
-      botJid
-    );
-
-  return Boolean(
-    metadata?.participants?.some(
-      (participant) =>
-        normalizeJid(
-          participant?.id
-        ) === normalizedBot &&
-        (
-          participant?.admin === "admin" ||
-          participant?.admin === "superadmin"
-        )
-    )
-  );
-}
-
-/*
-|--------------------------------------------------------------------------
 | GET GROUP OWNER
 |--------------------------------------------------------------------------
 */
@@ -141,34 +112,35 @@ async function removeCommand(ctx) {
    * Check bot admin status.
    */
 
-  const botJid =
-    normalizeJid(
-      ctx.sock?.user?.id ||
-      ""
-    );
+const botJid =
+  normalizeJid(
+    ctx.sock?.user?.id ||
+    ""
+  );
 
-  if (
-    !isBotAdmin(
-      metadata,
-      botJid
-    )
-  ) {
-    await ctx.send(
-      [
-        "❌ BOT IS NOT ADMIN",
-        "",
-        "I need to be a group admin to remove members.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
-    );
+const botIsAdmin =
+  await isBotGroupAdmin(
+    ctx.sock,
+    metadata
+  );
 
-    return {
-      success: false,
-      reason:
-        "Bot is not a group admin."
-    };
-  }
+if (!botIsAdmin) {
+  await ctx.send(
+    [
+      "❌ BOT IS NOT ADMIN",
+      "",
+      "I need to be a group admin to remove members.",
+      "",
+      "🦁 TECH BY TOPFEROS MD 🐑"
+    ].join("\n")
+  );
+
+  return {
+    success: false,
+    reason:
+      "Bot is not a group admin."
+  };
+}
 
   /*
    * Identify the group owner.
