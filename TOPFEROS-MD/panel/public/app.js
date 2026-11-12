@@ -473,6 +473,12 @@ function normalizeAutomation(settings = {}) {
     antiDeleteMode: settings.antiDeleteMode || "private",
 
     antiCall: settings.antiCall === true,
+antiCallExceptionNumbers: Array.isArray(settings.antiCallExceptionNumbers)
+  ? settings.antiCallExceptionNumbers
+      .map(value => String(value || "").replace(/\D/g, ""))
+      .filter(Boolean)
+      .slice(0, 100)
+  : [],
     antiBug: settings.antiBug === true,
 
     antiBotMode: ["groups", "private", "both"].includes(
@@ -643,6 +649,10 @@ function fillAutomationSettings(automation = {}) {
   // ANTI CALL / BUG
   setFieldValue("antiCall", data.antiCall);
   setFieldValue("antiBug", data.antiBug);
+setFieldValue(
+  "antiCallExceptionNumbers",
+  (data.antiCallExceptionNumbers || []).join("\n")
+);
 
   // ANTI BOT
   setFieldValue("antiBotFilter", data.antiBotFilter);
@@ -729,6 +739,14 @@ function fillAutomationSettings(automation = {}) {
           number.trim()
         )
         .filter(Boolean);
+const antiCallExceptionNumbers =
+  getFieldValue("antiCallExceptionNumbers", "")
+    .split(/[\s,;]+/)
+    .map(number => number.replace(/\D/g, ""))
+    .filter((number, index, all) =>
+      number && all.indexOf(number) === index
+    )
+    .slice(0, 100);
 
     return {
       alwaysOnline:
@@ -857,6 +875,9 @@ autoReactEmojis: (() => {
           getFieldValue(
             "antiCall"
           )
+antiCall:
+  Boolean(
+    getFieldValue("antiCall")
         ),
 
       antiBug:
