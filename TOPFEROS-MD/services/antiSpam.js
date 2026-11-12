@@ -256,7 +256,7 @@ if (
     message.message?.videoMessage?.caption ||
     "";
 
-  const key = `${sessionId}:${chatJid}:${senderJid}`;
+  const key = `${sessionId}:${chatJid}:${senderIdentity}`;
   const result = checkSpam(key, text);
 
   if (!result.spam) {
@@ -279,12 +279,15 @@ if (
   let kicked = false;
 
   // WARN
-  if (mode === "warn" || mode === "warn_delete") {
+  if (
+  (mode === "warn" || mode === "warn_delete") &&
+  !result.suppressWarning
+) {
     try {
       await sock.sendMessage(
         chatJid,
         {
-          text: `⚠️ @${number} sispann voye mesaj repete oswa spam.`,
+          text: `⚠️ @${number || senderJid.split("@")[0]} sispann voye mesaj repete oswa spam.`,
           mentions: [senderJid]
         }
       );
