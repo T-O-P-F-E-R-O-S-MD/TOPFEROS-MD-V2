@@ -167,35 +167,6 @@ function getTarget(ctx) {
 
 /*
 |--------------------------------------------------------------------------
-| CHECK BOT ADMIN
-|--------------------------------------------------------------------------
-*/
-
-function isBotAdmin(
-  metadata,
-  botJid
-) {
-  const normalizedBot =
-    normalizeJid(
-      botJid
-    );
-
-  return Boolean(
-    metadata?.participants?.some(
-      (participant) =>
-        normalizeJid(
-          participant?.id
-        ) === normalizedBot &&
-        (
-          participant?.admin === "admin" ||
-          participant?.admin === "superadmin"
-        )
-    )
-  );
-}
-
-/*
-|--------------------------------------------------------------------------
 | FIND PARTICIPANT
 |--------------------------------------------------------------------------
 */
@@ -286,33 +257,29 @@ async function kickCommand(ctx) {
    * Check bot admin status.
    */
 
-  const botJid =
-    ctx.sock?.user?.id ||
-    "";
+const botIsAdmin =
+  await isBotGroupAdmin(
+    ctx.sock,
+    metadata
+  );
 
-  const botIsAdmin =
-    await isBotGroupAdmin(
-      ctx.sock,
-      metadata
-    );
+if (!botIsAdmin) {
+  await ctx.send(
+    [
+      "❌ BOT IS NOT ADMIN",
+      "",
+      "I need to be a group admin to remove members.",
+      "",
+      "🦁 TECH BY TOPFEROS MD 🐑"
+    ].join("\n")
+  );
 
-  if (!botIsAdmin) {
-    await ctx.send(
-      [
-        "❌ BOT IS NOT ADMIN",
-        "",
-        "I need to be a group admin to add members.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
-    );
-
-    return {
-      success: false,
-      reason:
-        "Bot is not a group admin."
-    };
-  }
+  return {
+    success: false,
+    reason:
+      "Bot is not a group admin."
+  };
+}
 
   /*
    * Find target member.
