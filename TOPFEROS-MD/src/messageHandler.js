@@ -1508,7 +1508,23 @@ try {
       message,
       sessionId,
       settings: filterAutomation,
-      isOwner: isOwner(message)
+      isOwner: isOwner(message),
+
+      ownerJid: (() => {
+        const ownerNumber =
+          config?.ownerNumber ||
+          config?.owner?.number ||
+          config?.bot?.ownerNumber ||
+          process.env.OWNER_NUMBER ||
+          "";
+
+        const cleanOwner =
+          String(ownerNumber).replace(/\D/g, "");
+
+        return cleanOwner
+          ? `${cleanOwner}@s.whatsapp.net`
+          : "";
+      })()
     });
 
   if (antiBotResult?.detected) {
