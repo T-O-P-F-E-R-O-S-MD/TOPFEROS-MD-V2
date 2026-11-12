@@ -205,8 +205,6 @@ if (!botIsAdmin) {
   };
 }
 
-        "❌ MEMBER NOT FOUND",
-        "",
         "Mention an admin or provide their phone number.",
         "",
         "Examples:",
