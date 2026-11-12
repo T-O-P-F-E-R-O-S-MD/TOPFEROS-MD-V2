@@ -31,6 +31,9 @@ const settingPanel =
 
 const antiSpam = require("../services/antiSpam");
 
+const antiBotService =
+  require("../services/antiBotService");
+
 const {
   isUnsafeMessageStructure
 } = require("../services/antiBug");
@@ -483,40 +486,37 @@ function isFromBot(
     sender === bot
   );
 }
-
 /*
 |--------------------------------------------------------------------------
-| TOPFEROS MD V2.0.0
-
-ANTI BOT FILTER — KNOWN BOT NUMBERS
+| IS BOT MESSAGE
+|--------------------------------------------------------------------------
 */
 
-function getKnownBotNumbers() {
-const raw =
-process.env.ANTI_BOT_NUMBERS || "";
+function isFromBot(
+  message,
+  sock
+) {
+  if (
+    message?.key?.fromMe
+  ) {
+    return true;
+  }
 
-return new Set(
-raw
-.split(",")
-.map((number) => normalizePhone(number))
-.filter(Boolean)
-);
-}
+  const sender =
+    normalizeJid(
+      getSenderJid(message)
+    );
 
-function isKnownBotSender(message, sock) {
-if (isFromBot(message, sock)) {
-return true;
-}
+  const bot =
+    normalizeJid(
+      getBotJid(sock)
+    );
 
-const senderNumber = normalizePhone(
-getSenderJid(message)
-);
-
-if (!senderNumber) {
-return false;
-}
-
-return getKnownBotNumbers().has(senderNumber);
+  return Boolean(
+    sender &&
+    bot &&
+    sender === bot
+  );
 }
 
 /*
@@ -1488,37 +1488,44 @@ try {
       };
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | ANTI BOT FILTER — SAFE PREPARATION
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| TOPFEROS MD V2.0.0
+| ANTI-BOT SERVICE CONNECTION
+|--------------------------------------------------------------------------
+*/
 
-    const filterSettings =
-      settingPanel.getSessionSettings(sessionId) || {};
+const filterSettings =
+  settingPanel.getSessionSettings(sessionId) || {};
 
-    const filterAutomation =
-      filterSettings.automation || {};
+const filterAutomation =
+  filterSettings.automation || {};
 
-const senderNumber = String(
-  message?.key?.participant ||
-  message?.key?.remoteJid ||
-  ""
-).split("@")[0].replace(/\D/g, "");
+try {
+  const antiBotResult =
+    await antiBotService.handleAntiBot({
+      sock,
+      message,
+      sessionId,
+      settings: filterAutomation,
+      isOwner: isOwner(message)
+    });
 
-const antiBotExemptNumbers = (
-  filterAutomation.antiBlockNumbers || []
-).map(number =>
-  String(number).replace(/\D/g, "")
-);
-
-const isAntiBotExempt =
-  antiBotExemptNumbers.includes(senderNumber);
-
-    if (filterAutomation.antiBotFilter === true) {
-      // Bot detection is not connected yet.
-      // Do not delete or warn users based on guesses.
-    }
+  if (antiBotResult?.detected) {
+    return {
+      success: true,
+      ignored: true,
+      command: "anti-bot",
+      result: antiBotResult,
+      sessionId: sessionId || null
+    };
+  }
+} catch (error) {
+  console.error(
+    "[TOPFEROS MD ANTI-BOT SERVICE]",
+    error?.stack || error
+  );
+}
 
     /*
     |--------------------------------------------------------------------------
