@@ -1512,6 +1512,29 @@ sock.ev.on("call", async (calls) => {
         ) {
           continue;
         }
+const callerNumber = String(call.from)
+  .split("@")[0]
+  .split(":")[0]
+  .replace(/\D/g, "");
+
+const exceptionNumbers = Array.isArray(
+  automation.antiCallExceptionNumbers
+)
+  ? automation.antiCallExceptionNumbers.map(
+      value => String(value || "").replace(/\D/g, "")
+    )
+  : [];
+
+if (
+  callerNumber &&
+  exceptionNumbers.includes(callerNumber)
+) {
+  logger.info(
+    `[${sessionId}] Anti Call: nimewo nan lis eksepsyon an, apèl la otorize.`
+  );
+
+  continue;
+}
 
         if (typeof sock.rejectCall !== "function") {
           logger.warn(
