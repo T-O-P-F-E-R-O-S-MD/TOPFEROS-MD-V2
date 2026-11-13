@@ -1,6 +1,8 @@
 
 "use strict";
 
+const viewonce = require("./viewonce");
+
 async function execute(context) {
   const {
     sock,
