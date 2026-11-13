@@ -689,6 +689,17 @@ async function execute(context) {
   }
 }
 
+function unwrapMessage(message) {
+  if (!message) return null;
+
+  let content = message.message || message;
+
+  if (content.ephemeralMessage?.message) {
+    content = content.ephemeralMessage.message;
+  }
+
+  return content;
+}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 📦 EXPORT
