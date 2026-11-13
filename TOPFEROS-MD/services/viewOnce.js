@@ -705,13 +705,9 @@ module.exports = {
   description:
     "Dekode View Once epi voye li nan DM bot la.",
 
-  usage:
-    ".vvv",
+  usage: ".vvv",
+
   execute,
   handleReplyForward,
-  handleVV2,
-  vv2Command,
-  vvvCommand,
-unwrapMessage,
-handleAutoViewOnce,
+  handleVV2
 };
