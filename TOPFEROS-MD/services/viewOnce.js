@@ -707,13 +707,11 @@ module.exports = {
 
   usage:
     ".vvv",
-
   execute,
-
   handleReplyForward,
-
   handleVV2,
-
   vv2Command,
   vvvCommand,
+unwrapMessage,
+handleAutoViewOnce,
 };
