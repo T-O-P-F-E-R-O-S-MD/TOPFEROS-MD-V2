@@ -1,59 +1,46 @@
+
 "use strict";
 
-// ╔════════════════════════════════════════════════════╗
-// ║              🦁 TOPFEROS MD V2.0.0               ║
-// ║                  DEMOTE COMMAND                  ║
-// ╚════════════════════════════════════════════════════╝
+// ============================================================
+// TOPFEROS MD V2.0.0
+// GROUP DEMOTE COMMAND
+// WhatsApp / Baileys 7.x
+// ============================================================
+
+const { registerCommand } = require("../src/messageHandler");
 
 const {
-  registerCommand
-} = require("../src/messageHandler");
-
-const {
-  isBotGroupAdmin
+  isBotGroupAdmin,
+  isGroupAdmin
 } = require("../services/groupAdmin");
 
-/*
-|--------------------------------------------------------------------------
-| JID HELPERS
-|--------------------------------------------------------------------------
-*/
+// ------------------------------------------------------------
+// JID HELPERS
+// ------------------------------------------------------------
 
 function normalizeJid(jid) {
-  if (!jid) {
-    return "";
-  }
-
-  return String(jid)
+  return String(jid || "")
     .trim()
+    .toLowerCase()
     .replace(/:\d+(?=@)/, "");
 }
 
 function numberToJid(number) {
-  const cleanNumber =
-    String(number || "")
-      .replace(/[^\d]/g, "");
+  const digits = String(number || "").replace(/\D/g, "");
 
-  if (!cleanNumber) {
-    return null;
-  }
-
-  return `${cleanNumber}@s.whatsapp.net`;
+  return digits
+    ? `${digits}@s.whatsapp.net`
+    : null;
 }
 
-/*
-|--------------------------------------------------------------------------
-| GET MENTIONED USERS
-|--------------------------------------------------------------------------
-*/
+// ------------------------------------------------------------
+// GET MENTIONED USERS
+// ------------------------------------------------------------
 
 function getMentionedUsers(message) {
-  const content =
-    message?.message;
+  const content = message?.message;
 
-  if (!content) {
-    return [];
-  }
+  if (!content) return [];
 
   const containers = [
     content.extendedTextMessage,
@@ -63,10 +50,9 @@ function getMentionedUsers(message) {
   ];
 
   for (const container of containers) {
-    const mentions =
-      container?.contextInfo?.mentionedJid;
+    const mentions = container?.contextInfo?.mentionedJid;
 
-    if (Array.isArray(mentions)) {
+    if (Array.isArray(mentions) && mentions.length) {
       return mentions;
     }
   }
@@ -74,303 +60,229 @@ function getMentionedUsers(message) {
   return [];
 }
 
-/*
-|--------------------------------------------------------------------------
-| GET TARGET
-|--------------------------------------------------------------------------
-*/
+// ------------------------------------------------------------
+// GET TARGET
+// ------------------------------------------------------------
 
 function getTarget(ctx) {
-  const mentioned =
-    getMentionedUsers(
-      ctx.message
-    );
+  const mentioned = getMentionedUsers(ctx.message);
 
   if (mentioned.length) {
-    return normalizeJid(
-      mentioned[0]
-    );
+    return normalizeJid(mentioned[0]);
   }
 
   if (ctx.args?.length) {
-    return numberToJid(
-      ctx.args[0]
-    );
+    return numberToJid(ctx.args[0]);
   }
 
   return null;
 }
 
-/*
-|--------------------------------------------------------------------------
-| FIND PARTICIPANT
-|--------------------------------------------------------------------------
-*/
-
-function findParticipant(
-  metadata,
-  targetJid
-) {
-  const normalizedTarget =
-    normalizeJid(
-      targetJid
-    );
-
-  return metadata?.participants?.find(
-    (participant) =>
-      normalizeJid(
-        participant?.id
-      ) === normalizedTarget
-  );
-}
-
-/*
-|--------------------------------------------------------------------------
-| DEMOTE COMMAND
-|--------------------------------------------------------------------------
-*/
+// ------------------------------------------------------------
+// DEMOTE COMMAND
+// ------------------------------------------------------------
 
 async function demoteCommand(ctx) {
+
+  // Only works inside groups
   if (!ctx.isGroup) {
     await ctx.send(
-      [
-        "❌ GROUP COMMAND ONLY",
-        "",
-        "This command can only be used inside a WhatsApp group.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+      "❌ GROUP COMMAND ONLY\n\n" +
+      "This command can only be used inside a WhatsApp group.\n\n" +
+      "🦁 TECH BY TOPFEROS MD 🐑"
     );
 
     return {
       success: false,
-      reason:
-        "Command used outside a group."
+      reason: "Not a group."
     };
   }
 
+  // Get group information
   let metadata;
 
   try {
-    metadata =
-      await ctx.sock.groupMetadata(
-        ctx.jid
-      );
+    metadata = await ctx.sock.groupMetadata(ctx.jid);
   } catch (error) {
     console.error(
       "[DEMOTE] Group metadata error:",
-      error?.stack ||
-        error
+      error?.stack || error
     );
 
     await ctx.send(
-      [
-        "❌ GROUP INFO ERROR",
-        "",
-        "Unable to retrieve group information.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+      "❌ GROUP INFO ERROR\n\n" +
+      "Unable to retrieve group information."
     );
 
     return {
       success: false,
-      error:
-        error?.message ||
-        String(error)
+      error: error?.message || String(error)
     };
   }
 
-  const botIsAdmin =
-  await isBotGroupAdmin(
+  // Check command sender admin permission
+  const senderIsAdmin = await isGroupAdmin(
+    ctx.sock,
+    metadata,
+    ctx.sender
+  );
+
+  if (!senderIsAdmin) {
+    await ctx.send(
+      "❌ ADMIN ONLY\n\n" +
+      "Only group admins can use this command."
+    );
+
+    return {
+      success: false,
+      reason: "Sender is not a group admin."
+    };
+  }
+
+  // Check bot admin permission
+  const botIsAdmin = await isBotGroupAdmin(
     ctx.sock,
     metadata
   );
 
-if (!botIsAdmin) {
-  await ctx.send(
-    [
-      "❌ BOT IS NOT ADMIN",
-      "",
-      "I need to be a group admin to remove admin permissions.",
-      "",
-      "🦁 TECH BY TOPFEROS MD 🐑"
-    ].join("\n")
-  );
-
-  return {
-    success: false,
-    reason:
-      "Bot is not a group admin."
-  };
-}
-
-        "Mention an admin or provide their phone number.",
-        "",
-        "Examples:",
-        `• ${ctx.prefix}demote @admin`,
-        `• ${ctx.prefix}demote 509xxxxxxxx`,
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+  if (!botIsAdmin) {
+    await ctx.send(
+      "❌ BOT IS NOT ADMIN\n\n" +
+      "I need to be a group admin to remove admin permissions."
     );
 
     return {
       success: false,
-      reason:
-        "No target member provided."
+      reason: "Bot is not a group admin."
     };
   }
 
-  const target =
-    findParticipant(
-      metadata,
-      targetJid
-    );
+  // Get target member
+  const targetJid = getTarget(ctx);
+
+  if (!targetJid) {
+    await ctx.send([
+      "❌ MEMBER NOT SPECIFIED",
+      "",
+      "Mention an admin or provide their phone number.",
+      "",
+      `Example: ${ctx.prefix}demote @admin`,
+      `Example: ${ctx.prefix}demote 509xxxxxxxx`,
+      "",
+      "🦁 TECH BY TOPFEROS MD 🐑"
+    ].join("\n"));
+
+    return {
+      success: false,
+      reason: "No target member provided."
+    };
+  }
+
+  // Find target in group participants
+  const target = metadata?.participants?.find(
+    participant =>
+      normalizeJid(participant?.id) === targetJid ||
+      normalizeJid(participant?.jid) === targetJid
+  );
 
   if (!target) {
     await ctx.send(
-      [
-        "❌ MEMBER NOT FOUND",
-        "",
-        "This user is not a member of the group.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+      "❌ MEMBER NOT FOUND\n\n" +
+      "This user is not a member of the group."
     );
 
     return {
       success: false,
-      reason:
-        "Target is not a group member."
+      reason: "Target is not a group member."
     };
   }
 
+  // Check target admin status
   if (
     target.admin !== "admin" &&
     target.admin !== "superadmin"
   ) {
     await ctx.send(
-      [
-        "ℹ️ NOT AN ADMIN",
-        "",
-        "This member does not have admin permissions.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+      "ℹ️ NOT AN ADMIN\n\n" +
+      "This member does not have admin permissions."
     );
 
     return {
       success: false,
-      reason:
-        "Target is not an admin."
+      reason: "Target is not an admin."
     };
   }
 
-  /*
-   * Protect the group owner/superadmin.
-   */
-
-  if (
-    target.admin === "superadmin"
-  ) {
+  // Protect group owner
+  if (target.admin === "superadmin") {
     await ctx.send(
-      [
-        "❌ OWNER PROTECTED",
-        "",
-        "The group owner cannot be demoted by this command.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+      "❌ OWNER PROTECTED\n\n" +
+      "The group owner cannot be demoted by this command."
     );
 
     return {
       success: false,
-      reason:
-        "Target is the group owner."
+      reason: "Target is the group owner."
     };
   }
 
+  // Execute demote
   try {
     await ctx.sock.groupParticipantsUpdate(
       ctx.jid,
       [target.id],
       "demote"
     );
+
   } catch (error) {
     console.error(
       "[DEMOTE] Demote member error:",
-      error?.stack ||
-        error
+      error?.stack || error
     );
 
     await ctx.send(
-      [
-        "❌ DEMOTE FAILED",
-        "",
-        "WhatsApp did not allow this member to be demoted.",
-        "",
-        "Make sure the bot still has group admin permissions.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+      "❌ DEMOTE FAILED\n\n" +
+      "WhatsApp did not allow this member to be demoted. " +
+      "Check the bot's admin permissions."
     );
 
     return {
       success: false,
-      error:
-        error?.message ||
-        String(error)
+      error: error?.message || String(error)
     };
   }
 
-  const targetNumber =
-    normalizeJid(
-      target.id
-    ).replace(
-      "@s.whatsapp.net",
-      ""
-    );
+  // Success message
+  const targetNumber = normalizeJid(target.id)
+    .replace(/@[^@]+$/, "");
 
-  await ctx.send(
-    [
-      "╭━━━〔 ⬇️ DEMOTE 〕━━━╮",
-      "┃",
-      "┃ ✅ Admin permissions removed.",
-      `┃ 👤 Member: ${targetNumber}`,
-      "┃",
-      "╰━━━━━━━━━━━━━━━━━━━━╯",
-      "",
-      "🦁 TECH BY TOPFEROS MD 🐑"
-    ].join("\n")
-  );
+  await ctx.send([
+    "╭━━━〔 ⬇️ DEMOTE 〕━━━╮",
+    "┃",
+    "┃ ✅ Admin permissions removed.",
+    `┃ 👤 Member: ${targetNumber}`,
+    "┃",
+    "╰━━━━━━━━━━━━━━━━━━━━╯",
+    "",
+    "🦁 TECH BY TOPFEROS MD 🐑"
+  ].join("\n"));
 
   return {
     success: true,
-    target:
-      target.id
+    target: target.id
   };
 }
 
-/*
-|--------------------------------------------------------------------------
-| REGISTER COMMAND
-|--------------------------------------------------------------------------
-*/
+// ------------------------------------------------------------
+// REGISTER COMMAND
+// ------------------------------------------------------------
 
-registerCommand(
-  "demote",
-  demoteCommand,
-  {
-    aliases: [],
-    description:
-      "Remove admin permissions from a group member.",
-    usage:
-      ".demote @admin",
-    category:
-      "GROUP"
-  }
-);
+registerCommand("demote", demoteCommand, {
+  aliases: [],
+  description: "Remove admin permissions from a group member.",
+  usage: ".demote @admin",
+  category: "GROUP"
+});
 
 module.exports = {
   demoteCommand
