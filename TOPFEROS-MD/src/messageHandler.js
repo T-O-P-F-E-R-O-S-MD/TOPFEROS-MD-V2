@@ -618,6 +618,61 @@ function getPrefix(sessionId = "") {
   return String(config?.bot?.prefix || ".").trim() || ".";
 }
 
+// ============================================================
+// UNWRAP WHATSAPP MESSAGE
+// ============================================================
+
+function unwrapMessageContent(messageContent) {
+  let current = messageContent;
+
+  if (!current) {
+    return null;
+  }
+
+  const wrapperKeys = [
+    "ephemeralMessage",
+    "viewOnceMessage",
+    "viewOnceMessageV2",
+    "viewOnceMessageV2Extension",
+    "documentWithCaptionMessage",
+    "editedMessage",
+    "associatedChildMessage"
+  ];
+
+  let safety = 0;
+
+  while (
+    current &&
+    safety < 10
+  ) {
+    safety++;
+
+    let found = false;
+
+    for (
+      const key of wrapperKeys
+    ) {
+      if (
+        current[key] &&
+        typeof current[key] === "object"
+      ) {
+        current =
+          current[key].message ||
+          current[key];
+
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      break;
+    }
+  }
+
+  return current || null;
+}
+
 /*
 |--------------------------------------------------------------------------
 | PARSE COMMAND USING THE SAVED PREFIX
