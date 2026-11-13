@@ -1,7 +1,9 @@
+
 "use strict";
 
 // 🦁 TOPFEROS MD V2.0.0
 // MEDIA SERVICE — VV2 / VVV
+// BAILEYS 7.x
 
 const {
   downloadContentFromMessage
@@ -13,6 +15,10 @@ const MEDIA_TYPES = [
   ["audioMessage", "audio"],
   ["documentMessage", "document"]
 ];
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📦 UNWRAP MESSAGE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 function unwrapMessage(input) {
   let content = input?.message || input;
@@ -38,6 +44,10 @@ function unwrapMessage(input) {
   return null;
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔒 VIEW ONCE DETECTION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 function getViewOnceMessage(input) {
   const content = unwrapMessage(input);
 
@@ -58,6 +68,68 @@ function getViewOnceMessage(input) {
   return null;
 }
 
+function isViewOnceMessage(input) {
+  const content = unwrapMessage(input);
+
+  if (!content) return false;
+
+  return Boolean(
+    getViewOnceMessage(content) ||
+    content.imageMessage?.viewOnce ||
+    content.videoMessage?.viewOnce
+  );
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 💬 GET QUOTED MESSAGE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function getQuotedMessage(input) {
+  const content = unwrapMessage(input);
+
+  if (!content) return null;
+
+  const queue = [content];
+  const visited = new Set();
+
+  while (queue.length) {
+    const current = queue.shift();
+
+    if (
+      !current ||
+      typeof current !== "object" ||
+      visited.has(current)
+    ) continue;
+
+    visited.add(current);
+
+    if (current.contextInfo?.quotedMessage) {
+      const quoted =
+        current.contextInfo.quotedMessage;
+
+      return {
+        download: quoted,
+        text:
+          quoted.conversation ||
+          quoted.extendedTextMessage?.text ||
+          ""
+      };
+    }
+
+    for (const value of Object.values(current)) {
+      if (value && typeof value === "object") {
+        queue.push(value);
+      }
+    }
+  }
+
+  return null;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📦 GET VIEW ONCE MEDIA INFO
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 function getViewOnceMedia(input) {
   const content = getViewOnceMessage(input);
 
@@ -75,54 +147,18 @@ function getViewOnceMedia(input) {
   return null;
 }
 
-function getQuotedMessage(input) {
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📦 GET NORMAL MEDIA
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function getNormalMedia(input) {
+  if (isViewOnceMessage(input)) {
+    return null;
+  }
+
   const content = unwrapMessage(input);
 
   if (!content) return null;
-
-  const queue = [content];
-  const visited = new Set();
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-
-    if (
-      !current ||
-      typeof current !== "object" ||
-      visited.has(current)
-    ) {
-      continue;
-    }
-
-    visited.add(current);
-
-    if (current.contextInfo?.quotedMessage) {
-      return {
-        download: current.contextInfo.quotedMessage,
-        text:
-          current.contextInfo.quotedMessage.conversation ||
-          current.contextInfo.quotedMessage
-            .extendedTextMessage?.text ||
-          ""
-      };
-    }
-
-    for (const value of Object.values(current)) {
-      if (value && typeof value === "object") {
-        queue.push(value);
-      }
-    }
-  }
-
-  return null;
-}
-
-function getNormalMedia(input) {
-  const content = unwrapMessage(input);
-
-  if (!content || getViewOnceMessage(content)) {
-    return null;
-  }
 
   for (const [key, type] of MEDIA_TYPES) {
     const item = content[key];
@@ -137,6 +173,10 @@ function getNormalMedia(input) {
 
   return null;
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📥 DOWNLOAD MEDIA
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function downloadNormalMedia(media) {
   if (!media?.message || !media?.type) {
@@ -154,8 +194,18 @@ async function downloadNormalMedia(media) {
     chunks.push(Buffer.from(chunk));
   }
 
-  return Buffer.concat(chunks);
+  const buffer = Buffer.concat(chunks);
+
+  if (!buffer.length) {
+    throw new Error("Empty media buffer");
+  }
+
+  return buffer;
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📤 BUILD PAYLOAD
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 function buildPayload(media, buffer) {
   const original = media.message;
@@ -164,14 +214,18 @@ function buildPayload(media, buffer) {
     case "image":
       return {
         image: buffer,
-        caption: original.caption || ""
+        ...(original.caption
+          ? { caption: original.caption }
+          : {})
       };
 
     case "video":
       return {
         video: buffer,
-        caption: original.caption || "",
-        mimetype: original.mimetype || "video/mp4"
+        mimetype: original.mimetype || "video/mp4",
+        ...(original.caption
+          ? { caption: original.caption }
+          : {})
       };
 
     case "audio":
@@ -185,14 +239,24 @@ function buildPayload(media, buffer) {
       return {
         document: buffer,
         mimetype:
-          original.mimetype || "application/octet-stream",
-        fileName: original.fileName || "TOPFEROS-MEDIA"
+          original.mimetype ||
+          "application/octet-stream",
+        fileName:
+          original.fileName ||
+          "TOPFEROS-MEDIA",
+        ...(original.caption
+          ? { caption: original.caption }
+          : {})
       };
 
     default:
       throw new Error("Unsupported media type");
   }
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🤖 NORMALIZE JID
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 function normalizeJid(jid) {
   if (!jid || typeof jid !== "string") {
@@ -202,104 +266,158 @@ function normalizeJid(jid) {
   return jid.replace(/:\d+@/, "@");
 }
 
-async function processMedia(ctx, sendBoth = false) {
-  const { sock, message } = ctx;
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🤖 GET BOT JID
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function getBotJid(sock) {
+  return normalizeJid(sock?.user?.id);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 💬 SEND RESPONSE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+async function sendResponse(ctx, text) {
+  if (typeof ctx?.send === "function") {
+    return ctx.send(text);
+  }
 
   const chatId =
-    ctx.jid ||
+    ctx?.jid ||
+    ctx?.message?.key?.remoteJid;
+
+  if (ctx?.sock && chatId) {
+    return ctx.sock.sendMessage(chatId, {
+      text
+    });
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📦 PROCESS NORMAL MEDIA
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+async function processMedia(ctx, sendToBot = false) {
+  const { sock, message } = ctx || {};
+
+  const chatId =
+    ctx?.jid ||
     message?.key?.remoteJid;
 
-  const senderId = normalizeJid(
-    ctx.sender ||
-    message?.key?.participant ||
-    (message?.key?.fromMe ? sock?.user?.id : chatId)
-  );
-
-  if (!sock || !chatId) {
-    return { success: false };
-  }
-
-  const quoted = getQuotedMessage(message);
-
-  if (!quoted) {
-    await ctx.send(
-      "❌ Reponn sou yon foto, videyo oswa odyo nòmal ak .vv2 oswa .vvv."
-    );
-
-    return { success: false };
-  }
-
-  if (getViewOnceMessage(quoted.download)) {
-    await ctx.send(
-      "🔒 Kòmand sa a pa telechaje ni transfere medya View Once."
-    );
-
-    return { success: false };
-  }
-
-  const media = getNormalMedia(quoted.download);
-
-  if (!media) {
-    await ctx.send(
-      "❌ Mwen pa jwenn medya nòmal nan mesaj ou reponn lan."
-    );
-
+  if (!sock || !message || !chatId) {
     return { success: false };
   }
 
   try {
-    const buffer = await downloadNormalMedia(media);
-    const payload = buildPayload(media, buffer);
+    const quoted = getQuotedMessage(message);
 
-    if (!sendBoth || !senderId || senderId === chatId) {
-      await sock.sendMessage(chatId, payload);
+    if (!quoted) {
+      await sendResponse(
+        ctx,
+        "❌ Reponn sou yon foto, videyo, odyo oswa dokiman nòmal."
+      );
 
-      return { success: true };
+      return { success: false };
     }
 
-    await sock.sendMessage(senderId, payload);
+    if (isViewOnceMessage(quoted.download)) {
+      await sendResponse(
+        ctx,
+        "🔒 Mesaj View Once sa a pa sipòte."
+      );
 
-    const sent = await sock.sendMessage(chatId, payload);
+      return { success: false };
+    }
 
-    if (sent?.key) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+    const media = getNormalMedia(quoted.download);
 
-      try {
-        await sock.sendMessage(chatId, {
-          delete: sent.key
-        });
-      } catch (error) {
-        console.error(
-          "[TOPFEROS MD] Delete error:",
-          error.message
-        );
+    if (!media) {
+      await sendResponse(
+        ctx,
+        "❌ Mwen pa jwenn medya nòmal nan mesaj la."
+      );
+
+      return { success: false };
+    }
+
+    const buffer =
+      await downloadNormalMedia(media);
+
+    const payload =
+      buildPayload(media, buffer);
+
+    let destination = chatId;
+
+    // VVV → BOT DM
+    if (sendToBot) {
+      destination = getBotJid(sock);
+
+      if (!destination) {
+        throw new Error("Bot JID not found");
       }
     }
 
-    return {
-      success: true,
-      dmSent: true,
-      chatSent: true
-    };
-  } catch (error) {
-    console.error(
-      "[TOPFEROS MD MEDIA]",
-      error.stack || error.message || error
+    await sock.sendMessage(
+      destination,
+      payload
     );
 
-    await ctx.send("❌ Transfè medya a echwe.");
+    await sendResponse(
+      ctx,
+      sendToBot
+        ? "✅ Medya a voye nan DM bot la."
+        : "✅ Medya a voye nan menm chat la."
+    );
+
+    return {
+      success: true,
+      type: media.type,
+      destination
+    };
+
+  } catch (error) {
+    console.error(
+      "[TOPFEROS MD MEDIA ERROR]",
+      error?.stack || error?.message || error
+    );
+
+    await sendResponse(
+      ctx,
+      "❌ Transfè medya a echwe."
+    );
 
     return { success: false };
   }
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 👁️ VV2
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function vv2Command(ctx) {
   return processMedia(ctx, false);
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📩 VVV
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 async function vvvCommand(ctx) {
   return processMedia(ctx, true);
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📋 EXECUTE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+async function execute(ctx) {
+  return vvvCommand(ctx);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🤖 AUTO VIEW ONCE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function handleAutoViewOnce() {
   return {
@@ -308,13 +426,36 @@ async function handleAutoViewOnce() {
   };
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📦 EXPORT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 module.exports = {
+  name: "viewonce",
+
+  aliases: [
+    "vreply",
+    "vforward"
+  ],
+
+  description:
+    "Transfere medya nòmal nan menm chat oswa DM bot la.",
+
+  usage: ".vv2 / .vvv",
+
+  execute,
+  processMedia,
+  vv2Command,
+  vvvCommand,
   unwrapMessage,
   getViewOnceMessage,
   getViewOnceMedia,
   getQuotedMessage,
   getNormalMedia,
-  vv2Command,
-  vvvCommand,
+  downloadNormalMedia,
+  buildPayload,
+  normalizeJid,
+  getBotJid,
+  isViewOnceMessage,
   handleAutoViewOnce
 };
