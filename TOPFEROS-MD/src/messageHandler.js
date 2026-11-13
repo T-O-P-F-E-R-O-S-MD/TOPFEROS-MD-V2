@@ -29,7 +29,7 @@ const sessionManager =
 const settingPanel =
   require("./settingPanel");
 
-const viewonce = require("../services/viewonce");
+const viewonce = require("../services/viewOnce");
 
 const antiSpam = require("../services/antiSpam");
 
