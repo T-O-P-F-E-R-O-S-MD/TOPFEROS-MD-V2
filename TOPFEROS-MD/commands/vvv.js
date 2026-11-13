@@ -5,8 +5,6 @@
 // VVV COMMAND
 // Same Chat + Private DM + Delete after 1 second
 
-const viewonce = require("../services/viewOnce");
-
 const sleep = (ms) =>
   new Promise(resolve => setTimeout(resolve, ms));
 
