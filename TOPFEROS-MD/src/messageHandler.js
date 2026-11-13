@@ -374,37 +374,7 @@ function extractMessageText(
   return "";
 }
 /*
-    |--------------------------------------------------------------------------
-    | AUTO VIEW ONCE IN PRIVATE DM
-    |--------------------------------------------------------------------------
-    */
-
-    if (
-      !isGroup(jid) &&
-      !isStatus(jid) &&
-      !message?.key?.fromMe &&
-      typeof handleAutoViewOnce === "function"
-    ) {
-      try {
-        const autoViewOnce =
-          await handleAutoViewOnce(sock, message);
-
-        if (autoViewOnce?.success) {
-          return {
-            success: true,
-            command: "auto-viewonce",
-            result: autoViewOnce,
-            sessionId: sessionId || null
-          };
-        }
-      } catch (error) {
-        console.error(
-          "[AUTO VIEW ONCE]",
-          error?.stack || error
-        );
-      }
-    }
-
+ 
 /*
 |--------------------------------------------------------------------------
 | GET MESSAGE TYPE
@@ -1504,6 +1474,36 @@ async function handleMessageCore(sock, message, sessionId) {
     }
 
     const jid = getChatJid(message);
+   |--------------------------------------------------------------------------
+    | AUTO VIEW ONCE IN PRIVATE DM
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      !isGroup(jid) &&
+      !isStatus(jid) &&
+      !message?.key?.fromMe &&
+      typeof handleAutoViewOnce === "function"
+    ) {
+      try {
+        const autoViewOnce =
+          await handleAutoViewOnce(sock, message);
+
+        if (autoViewOnce?.success) {
+          return {
+            success: true,
+            command: "auto-viewonce",
+            result: autoViewOnce,
+            sessionId: sessionId || null
+          };
+        }
+      } catch (error) {
+        console.error(
+          "[AUTO VIEW ONCE]",
+          error?.stack || error
+        );
+      }
+    }
 
 /*
 |--------------------------------------------------------------------------
