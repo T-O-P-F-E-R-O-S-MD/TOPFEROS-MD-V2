@@ -112,10 +112,51 @@ async function groupStatusCommand(ctx) {
           caption
         };
 
-    await ctx.sock.sendMessage(
-      "status@broadcast",
-      statusMessage
-    );
+ 
+// GET GROUP MEMBERS WHO WILL RECEIVE THE STATUS
+
+const statusJidList = [
+  ...new Set(
+    (metadata.participants || [])
+      .map(participant =>
+        participant.id ||
+        participant.jid ||
+        participant.phoneNumber
+      )
+      .filter(jid =>
+        jid &&
+        jid !== ctx.sock.user?.id
+      )
+  )
+];
+
+if (!statusJidList.length) {
+  throw new Error(
+    "No valid status recipients found."
+  );
+}
+
+// PUBLISH STATUS TO WHATSAPP
+
+const result = await ctx.sock.sendMessage(
+  "status@broadcast",
+  statusMessage,
+  {
+    broadcast: true,
+    statusJidList
+  }
+);
+
+if (!result?.key?.id) {
+  throw new Error(
+    "WhatsApp did not return a valid status message ID."
+  );
+}
+
+console.log(
+  "[GSTATUS] Status submitted:",
+  result.key.id
+);
 
     await ctx.send(
       `✅ STATUS PUBLISHED\n\n${isImage ? "🖼️ Image" : "🎥 Video"} published to WhatsApp Status.\n\n🦁 TECH BY TOPFEROS MD 🐑`
