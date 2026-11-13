@@ -1,5 +1,10 @@
 "use strict";
 
+// 🦁 TOPFEROS MD V2.0.0
+// MEDIA SERVICE
+// Compatible with commands/vv2.js
+// Baileys 7.x
+
 const {
   downloadContentFromMessage
 } = require("@whiskeysockets/baileys");
@@ -12,7 +17,7 @@ const {
 // → Dekode
 // → Voye nan MENM CHAT la
 //
-// .viewonce
+// .vvv
 // → Reply sou View Once
 // → Dekode
 // → Voye nan DM BOT la
@@ -701,7 +706,7 @@ module.exports = {
     "Dekode View Once epi voye li nan DM bot la.",
 
   usage:
-    ".viewonce",
+    ".vvv",
 
   execute,
 
