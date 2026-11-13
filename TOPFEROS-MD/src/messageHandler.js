@@ -212,6 +212,40 @@ function registerCommand(name, handler, options = {}) {
 
 /*
 |--------------------------------------------------------------------------
+| TOPFEROS MD V2.0.0
+| VV2 / VVV COMMAND REGISTRATION
+|--------------------------------------------------------------------------
+*/
+
+// VV2
+registerCommand(
+  vv2CommandModule.name,
+  async (ctx) => {
+    return await vv2Command(ctx);
+  },
+  {
+    aliases: vv2CommandModule.aliases || [],
+    description: vv2CommandModule.description,
+    usage: vv2CommandModule.usage,
+    category: "MEDIA"
+  }
+);
+
+// VVV
+registerCommand(
+  "vvv",
+  async (ctx) => {
+    return await vvvCommand(ctx);
+  },
+  {
+    description: "Send authorized media to chat and private DM.",
+    usage: ".vvv",
+    category: "MEDIA"
+  }
+);
+
+/*
+|--------------------------------------------------------------------------
 | FIND COMMAND
 |--------------------------------------------------------------------------
 */
