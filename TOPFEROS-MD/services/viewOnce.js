@@ -1,7 +1,10 @@
+
 "use strict";
 
 // 🦁 TOPFEROS MD V2.0.0
-// MEDIA SERVICE — VV2 / VVV
+// MEDIA SERVICE
+// Compatible with commands/vv2.js
+// Baileys 7.x
 
 const {
   downloadContentFromMessage
@@ -15,51 +18,54 @@ const MEDIA_TYPES = [
 ];
 
 function unwrapMessage(input) {
-  let content = input?.message || input;
+  let current = input?.message || input;
 
   for (let i = 0; i < 10; i++) {
-    if (!content || typeof content !== "object") {
+    if (!current) return null;
+
+    // Respect WhatsApp View Once restrictions.
+    if (
+      current.viewOnceMessage ||
+      current.viewOnceMessageV2 ||
+      current.viewOnceMessageV2Extension
+    ) {
       return null;
     }
 
-    if (content.ephemeralMessage?.message) {
-      content = content.ephemeralMessage.message;
+    if (current.ephemeralMessage) {
+      current = current.ephemeralMessage.message;
       continue;
     }
 
-    if (content.documentWithCaptionMessage?.message) {
-      content = content.documentWithCaptionMessage.message;
+    if (current.documentWithCaptionMessage) {
+      current =
+        current.documentWithCaptionMessage.message;
       continue;
     }
 
-    return content;
+    break;
   }
 
-  return null;
+  return current;
 }
 
-function getViewOnceMessage(input) {
-  const content = unwrapMessage(input);
+function getQuotedMessage(message) {
+  const content = unwrapMessage(message);
 
   if (!content) return null;
 
-  const keys = [
-    "viewOnceMessage",
-    "viewOnceMessageV2",
-    "viewOnceMessageV2Extension"
-  ];
+  for (const value of Object.values(content)) {
+    const quoted =
+      value?.contextInfo?.quotedMessage;
 
-  for (const key of keys) {
-    if (content[key]?.message) {
-      return content[key].message;
-    }
+    if (quoted) return quoted;
   }
 
   return null;
 }
 
-function getViewOnceMedia(input) {
-  const content = getViewOnceMessage(input);
+function findMedia(message) {
+  const content = unwrapMessage(message);
 
   if (!content) return null;
 
@@ -67,7 +73,7 @@ function getViewOnceMedia(input) {
     if (content[key]) {
       return {
         type,
-        message: content[key]
+        media: content[key]
       };
     }
   }
@@ -75,77 +81,10 @@ function getViewOnceMedia(input) {
   return null;
 }
 
-function getQuotedMessage(input) {
-  const content = unwrapMessage(input);
-
-  if (!content) return null;
-
-  const queue = [content];
-  const visited = new Set();
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-
-    if (
-      !current ||
-      typeof current !== "object" ||
-      visited.has(current)
-    ) {
-      continue;
-    }
-
-    visited.add(current);
-
-    if (current.contextInfo?.quotedMessage) {
-      return {
-        download: current.contextInfo.quotedMessage,
-        text:
-          current.contextInfo.quotedMessage.conversation ||
-          current.contextInfo.quotedMessage
-            .extendedTextMessage?.text ||
-          ""
-      };
-    }
-
-    for (const value of Object.values(current)) {
-      if (value && typeof value === "object") {
-        queue.push(value);
-      }
-    }
-  }
-
-  return null;
-}
-
-function getNormalMedia(input) {
-  const content = unwrapMessage(input);
-
-  if (!content || getViewOnceMessage(content)) {
-    return null;
-  }
-
-  for (const [key, type] of MEDIA_TYPES) {
-    const item = content[key];
-
-    if (item && !item.viewOnce) {
-      return {
-        type,
-        message: item
-      };
-    }
-  }
-
-  return null;
-}
-
-async function downloadNormalMedia(media) {
-  if (!media?.message || !media?.type) {
-    throw new Error("Invalid media object");
-  }
-
+async function downloadMedia(media, type) {
   const stream = await downloadContentFromMessage(
-    media.message,
-    media.type
+    media,
+    type
   );
 
   const chunks = [];
@@ -157,164 +96,77 @@ async function downloadNormalMedia(media) {
   return Buffer.concat(chunks);
 }
 
-function buildPayload(media, buffer) {
-  const original = media.message;
+async function handleVV2(context) {
+  const { sock, message } = context || {};
 
-  switch (media.type) {
-    case "image":
-      return {
-        image: buffer,
-        caption: original.caption || ""
-      };
+  if (!sock || !message) return false;
 
-    case "video":
-      return {
-        video: buffer,
-        caption: original.caption || "",
-        mimetype: original.mimetype || "video/mp4"
-      };
+  const chatId = message.key?.remoteJid;
 
-    case "audio":
-      return {
-        audio: buffer,
-        mimetype: original.mimetype || "audio/ogg",
-        ptt: Boolean(original.ptt)
-      };
-
-    case "document":
-      return {
-        document: buffer,
-        mimetype:
-          original.mimetype || "application/octet-stream",
-        fileName: original.fileName || "TOPFEROS-MEDIA"
-      };
-
-    default:
-      throw new Error("Unsupported media type");
-  }
-}
-
-function normalizeJid(jid) {
-  if (!jid || typeof jid !== "string") {
-    return null;
-  }
-
-  return jid.replace(/:\d+@/, "@");
-}
-
-async function processMedia(ctx, sendBoth = false) {
-  const { sock, message } = ctx;
-
-  const chatId =
-    ctx.jid ||
-    message?.key?.remoteJid;
-
-  const senderId = normalizeJid(
-    ctx.sender ||
-    message?.key?.participant ||
-    (message?.key?.fromMe ? sock?.user?.id : chatId)
-  );
-
-  if (!sock || !chatId) {
-    return { success: false };
-  }
+  if (!chatId) return false;
 
   const quoted = getQuotedMessage(message);
 
-  if (!quoted) {
-    await ctx.send(
-      "❌ Reponn sou yon foto, videyo oswa odyo nòmal ak .vv2 oswa .vvv."
-    );
+  if (!quoted) return false;
 
-    return { success: false };
+  const found = findMedia(quoted);
+
+  if (!found) return false;
+
+  const { type, media } = found;
+
+  const buffer = await downloadMedia(
+    media,
+    type
+  );
+
+  if (!buffer.length) return false;
+
+  const options = {};
+
+  if (type === "image") {
+    options.image = buffer;
+    options.caption = media.caption || "";
   }
 
-  if (getViewOnceMessage(quoted.download)) {
-    await ctx.send(
-      "🔒 Kòmand sa a pa telechaje ni transfere medya View Once."
-    );
-
-    return { success: false };
+  if (type === "video") {
+    options.video = buffer;
+    options.caption = media.caption || "";
+    options.mimetype =
+      media.mimetype || "video/mp4";
   }
 
-  const media = getNormalMedia(quoted.download);
-
-  if (!media) {
-    await ctx.send(
-      "❌ Mwen pa jwenn medya nòmal nan mesaj ou reponn lan."
-    );
-
-    return { success: false };
+  if (type === "audio") {
+    options.audio = buffer;
+    options.mimetype =
+      media.mimetype || "audio/ogg";
+    options.ptt = Boolean(media.ptt);
   }
 
-  try {
-    const buffer = await downloadNormalMedia(media);
-    const payload = buildPayload(media, buffer);
-
-    if (!sendBoth || !senderId || senderId === chatId) {
-      await sock.sendMessage(chatId, payload);
-
-      return { success: true };
-    }
-
-    await sock.sendMessage(senderId, payload);
-
-    const sent = await sock.sendMessage(chatId, payload);
-
-    if (sent?.key) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      try {
-        await sock.sendMessage(chatId, {
-          delete: sent.key
-        });
-      } catch (error) {
-        console.error(
-          "[TOPFEROS MD] Delete error:",
-          error.message
-        );
-      }
-    }
-
-    return {
-      success: true,
-      dmSent: true,
-      chatSent: true
-    };
-  } catch (error) {
-    console.error(
-      "[TOPFEROS MD MEDIA]",
-      error.stack || error.message || error
-    );
-
-    await ctx.send("❌ Transfè medya a echwe.");
-
-    return { success: false };
+  if (type === "document") {
+    options.document = buffer;
+    options.mimetype =
+      media.mimetype ||
+      "application/octet-stream";
+    options.fileName =
+      media.fileName || "document";
   }
-}
 
-async function vv2Command(ctx) {
-  return processMedia(ctx, false);
-}
+  await sock.sendMessage(chatId, options, {
+    quoted: message
+  });
 
-async function vvvCommand(ctx) {
-  return processMedia(ctx, true);
-}
+  console.log(
+    `[VV2] Media processed | type=${type}`
+  );
 
-async function handleAutoViewOnce() {
-  return {
-    success: false,
-    handled: false
-  };
+  return true;
 }
 
 module.exports = {
+  handleVV2,
   unwrapMessage,
-  getViewOnceMessage,
-  getViewOnceMedia,
   getQuotedMessage,
-  getNormalMedia,
-  vv2Command,
-  vvvCommand,
-  handleAutoViewOnce
+  findMedia,
+  downloadMedia
 };
