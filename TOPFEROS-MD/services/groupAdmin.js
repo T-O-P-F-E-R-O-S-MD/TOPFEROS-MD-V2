@@ -1,4 +1,15 @@
+
 "use strict";
+
+// ============================================================
+// TOPFEROS MD V2.0.0
+// GROUP ADMIN SERVICE
+// WhatsApp / Baileys 7.x
+// ============================================================
+
+// ------------------------------------------------------------
+// NORMALIZE JID
+// ------------------------------------------------------------
 
 function cleanJid(value) {
   return String(value || "")
@@ -7,6 +18,10 @@ function cleanJid(value) {
     .replace(/:\d+(?=@)/, "");
 }
 
+// ------------------------------------------------------------
+// CHECK ADMIN PARTICIPANT
+// ------------------------------------------------------------
+
 function isAdminParticipant(participant) {
   return (
     participant?.admin === "admin" ||
@@ -14,10 +29,9 @@ function isAdminParticipant(participant) {
   );
 }
 
-function addIdentity(set, value) {
-  const jid = cleanJid(value);
-  if (jid) set.add(jid);
-}
+// ------------------------------------------------------------
+// PHONE IDENTITY
+// ------------------------------------------------------------
 
 function getPhoneIdentity(value) {
   const jid = cleanJid(value);
@@ -29,41 +43,62 @@ function getPhoneIdentity(value) {
   return jid.split("@")[0];
 }
 
+// ------------------------------------------------------------
+// RESOLVE WHATSAPP IDENTITY
+// Supports PN and LID
+// ------------------------------------------------------------
+
 async function resolveIdentity(sock, value) {
   const identities = new Set();
   const jid = cleanJid(value);
 
-  addIdentity(identities, jid);
+  if (jid) {
+    identities.add(jid);
+  }
 
   if (!jid) return identities;
 
   const mapping = sock?.signalRepository?.lidMapping;
 
   try {
+
+    // LID -> Phone Number
     if (
       jid.endsWith("@lid") &&
       typeof mapping?.getPNForLID === "function"
     ) {
       const pn = await mapping.getPNForLID(jid);
-      addIdentity(identities, pn);
+
+      if (pn) {
+        identities.add(cleanJid(pn));
+      }
     }
 
+    // Phone Number -> LID
     if (
       jid.endsWith("@s.whatsapp.net") &&
       typeof mapping?.getLIDForPN === "function"
     ) {
       const lid = await mapping.getLIDForPN(jid);
-      addIdentity(identities, lid);
+
+      if (lid) {
+        identities.add(cleanJid(lid));
+      }
     }
+
   } catch (error) {
     console.warn(
       "[GROUP ADMIN] Identity mapping warning:",
-      error.message
+      error?.message || error
     );
   }
 
   return identities;
 }
+
+// ------------------------------------------------------------
+// CHECK IF BOT IS GROUP ADMIN
+// ------------------------------------------------------------
 
 async function isBotGroupAdmin(sock, metadata) {
   try {
@@ -88,10 +123,18 @@ async function isBotGroupAdmin(sock, metadata) {
       console.error(
         "[GROUP ADMIN] Bot identity is unavailable."
       );
+
       return false;
     }
 
+    const botNumbers = new Set(
+      [...botIdentities]
+        .map(getPhoneIdentity)
+        .filter(Boolean)
+    );
+
     for (const participant of participants) {
+
       if (!isAdminParticipant(participant)) {
         continue;
       }
@@ -110,18 +153,14 @@ async function isBotGroupAdmin(sock, metadata) {
         }
       }
 
+      // Compare complete identities
       for (const identity of participantIdentities) {
         if (botIdentities.has(identity)) {
           return true;
         }
       }
 
-      const botNumbers = new Set(
-        [...botIdentities]
-          .map(getPhoneIdentity)
-          .filter(Boolean)
-      );
-
+      // Compare phone numbers
       const participantNumbers = new Set(
         [...participantIdentities]
           .map(getPhoneIdentity)
@@ -144,6 +183,7 @@ async function isBotGroupAdmin(sock, metadata) {
     );
 
     return false;
+
   } catch (error) {
     console.error(
       "[GROUP ADMIN CHECK ERROR]",
@@ -154,6 +194,65 @@ async function isBotGroupAdmin(sock, metadata) {
   }
 }
 
+// ------------------------------------------------------------
+// CHECK IF A MEMBER IS GROUP ADMIN
+// ------------------------------------------------------------
+
+async function isGroupAdmin(sock, metadata, userJid) {
+  try {
+    const targetIdentities = await resolveIdentity(
+      sock,
+      userJid
+    );
+
+    if (!targetIdentities.size) {
+      return false;
+    }
+
+    for (const participant of metadata?.participants || []) {
+
+      if (!isAdminParticipant(participant)) {
+        continue;
+      }
+
+      const participantIdentities = new Set();
+
+      for (const value of [
+        participant.id,
+        participant.jid,
+        participant.phoneNumber
+      ]) {
+        const resolved = await resolveIdentity(sock, value);
+
+        for (const identity of resolved) {
+          participantIdentities.add(identity);
+        }
+      }
+
+      for (const identity of participantIdentities) {
+        if (targetIdentities.has(identity)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+
+  } catch (error) {
+    console.error(
+      "[GROUP ADMIN CHECK ERROR]",
+      error?.stack || error
+    );
+
+    return false;
+  }
+}
+
+// ------------------------------------------------------------
+// EXPORT
+// ------------------------------------------------------------
+
 module.exports = {
-  isBotGroupAdmin
+  isBotGroupAdmin,
+  isGroupAdmin
 };
