@@ -3,8 +3,6 @@
 
 const viewonce = require("../services/viewonce");
 
-const viewonce = require("./viewonce");
-
 // 🦁 TOPFEROS MD V2.0.0
 // VVV COMMAND
 // Same Chat + Private DM + Delete after 1 second
