@@ -74,7 +74,7 @@ function findMedia(message) {
 
     if (!media) continue;
 
-    // Verifye si se yon medya ki gen enfòmasyon
+    // Verifye si medya a gen enfòmasyon
     // Baileys bezwen pou telechajman.
     if (
       !media.url &&
@@ -95,7 +95,7 @@ function findMedia(message) {
 
   return null;
 }
-}
+
 async function downloadMedia(media, type) {
   if (!media || !type) {
     throw new Error(
@@ -144,6 +144,7 @@ async function downloadMedia(media, type) {
 
   return buffer;
 }
+
 async function handleVV2(context) {
   const { sock, message } = context || {};
 
