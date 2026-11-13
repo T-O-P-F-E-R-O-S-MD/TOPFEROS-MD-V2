@@ -1158,6 +1158,44 @@ registerCommand(
 
 /*
 |--------------------------------------------------------------------------
+| COMMAND: VV2
+|--------------------------------------------------------------------------
+*/
+
+registerCommand(
+  "vv2",
+  async (ctx) => {
+    return vv2Command(ctx);
+  },
+  {
+    description: "Trete medya nòmal ki site nan mesaj la.",
+    usage: ".vv2",
+    category: "MEDIA"
+  }
+);
+
+/*
+|--------------------------------------------------------------------------
+| COMMAND: VV2
+| TOPFEROS MD V2.0.0
+|--------------------------------------------------------------------------
+*/
+
+registerCommand(
+  vv2CommandModule.name,
+  async (ctx) => {
+    return await vv2Command(ctx);
+  },
+  {
+    aliases: vv2CommandModule.aliases,
+    description: vv2CommandModule.description,
+    usage: vv2CommandModule.usage,
+    category: "MEDIA"
+  }
+);
+
+/*
+|--------------------------------------------------------------------------
 | COMMAND: VIDEO
 |--------------------------------------------------------------------------
 */
