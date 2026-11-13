@@ -1124,64 +1124,6 @@ registerCommand(
 
 /*
 |--------------------------------------------------------------------------
-| COMMAND: VV2
-|--------------------------------------------------------------------------
-*/
-
-registerCommand(
-  "vv2",
-  async (ctx) => {
-    return vv2Command(ctx);
-  },
-  {
-    description: "Trete medya nòmal ki site nan mesaj la.",
-    usage: ".vv2",
-    category: "MEDIA"
-  }
-);
-
-/*
-|--------------------------------------------------------------------------
-| COMMAND: VV2
-|--------------------------------------------------------------------------
-*/
-
-registerCommand(
-  "vv2",
-  async (ctx) => await vv2Command(ctx),
-  {
-    aliases: Array.isArray(vv2CommandModule.aliases)
-      ? vv2CommandModule.aliases
-      : [],
-    description:
-      vv2CommandModule.description || "Trete medya nòmal.",
-    usage: vv2CommandModule.usage || ".vv2",
-    category: "MEDIA"
-  }
-);
-
-/*
-|--------------------------------------------------------------------------
-| COMMAND: VVV
-| TOPFEROS MD V2.0.0
-|--------------------------------------------------------------------------
-*/
-
-registerCommand(
-  "vvv",
-  async (ctx) => {
-    await vvvCommand(ctx);
-  },
-  {
-    aliases: [],
-    description: "Send media to chat and DM",
-    usage: ".vvv",
-    category: "MEDIA"
-  }
-);
-
-/*
-|--------------------------------------------------------------------------
 | COMMAND: VIDEO
 |--------------------------------------------------------------------------
 */
@@ -1595,38 +1537,6 @@ try {
     error?.stack || error
   );
 }
-
-    /*
-    |--------------------------------------------------------------------------
-    | AUTO VIEW ONCE IN PRIVATE DM
-    |--------------------------------------------------------------------------
-    */
-
-       if (
-      !isGroup(jid) &&
-      !isStatus(jid) &&
-      !message?.key?.fromMe &&
-      typeof handleAutoViewOnce === "function"
-    ) {
-      try {
-        const autoViewOnce =
-          await handleAutoViewOnce(sock, message);
-
-        if (autoViewOnce?.success) {
-          return {
-            success: true,
-            command: "auto-viewonce",
-            result: autoViewOnce,
-            sessionId: sessionId || null
-          };
-        }
-      } catch (error) {
-        console.error(
-          "[AUTO VIEW ONCE]",
-          error?.stack || error
-        );
-      }
-    }
 
     /*
     |--------------------------------------------------------------------------
