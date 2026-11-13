@@ -1,166 +1,64 @@
+
 "use strict";
 
-// ╔════════════════════════════════════════════════════╗
-// ║              🦁 TOPFEROS MD V2.0.0               ║
-// ║              SET GROUP DESCRIPTION COMMAND        ║
-// ╚════════════════════════════════════════════════════╝
+const { registerCommand } = require("../src/messageHandler");
 
 const {
-  registerCommand
-} = require("../src/messageHandler");
-
-function normalizeJid(jid) {
-  if (!jid) {
-    return "";
-  }
-
-  return String(jid)
-    .split(":")[0]
-    .trim()
-    .toLowerCase();
-}
-
-function isAdmin(metadata, jid) {
-  const normalizedJid =
-    normalizeJid(jid);
-
-  const participant =
-    metadata?.participants?.find(
-      (item) =>
-        normalizeJid(item?.id) ===
-        normalizedJid
-    );
-
-  return (
-    participant?.admin === "admin" ||
-    participant?.admin === "superadmin"
-  );
-}
+  isGroupAdmin,
+  isBotGroupAdmin
+} = require("../services/groupAdmin");
 
 async function setGroupDescriptionCommand(ctx) {
   if (!ctx.isGroup) {
-    await ctx.send(
-      "❌ This command can only be used inside a group."
-    );
-    return;
+    return ctx.send("❌ This command only works in groups.");
   }
 
-  const description =
-    ctx.text?.trim();
+  const description = String(ctx.text || "").trim();
 
   if (!description) {
-    await ctx.send(
-      [
-        "❌ DESCRIPTION REQUIRED",
-        "",
-        `Example: ${ctx.prefix}setdesc Welcome to TOPFEROS FAMILY`,
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+    return ctx.send(
+      `❌ DESCRIPTION REQUIRED\n\nExample:\n${ctx.prefix}setdesc Welcome to TOPFEROS FAMILY`
     );
-    return;
-  }
-
-  let metadata;
-
-  try {
-    metadata =
-      await ctx.sock.groupMetadata(
-        ctx.jid
-      );
-  } catch {
-    await ctx.send(
-      "❌ Unable to retrieve group information."
-    );
-    return;
-  }
-
-  const sender =
-    ctx.sender ||
-    ctx.message?.key?.participant ||
-    "";
-
-  if (!isAdmin(metadata, sender)) {
-    await ctx.send(
-      [
-        "❌ ADMIN ONLY",
-        "",
-        "Only group admins can change the group description.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
-    );
-    return;
-  }
-
-  const botJid =
-    ctx.sock?.user?.id ||
-    "";
-
-  if (!isAdmin(metadata, botJid)) {
-    await ctx.send(
-      [
-        "❌ BOT MUST BE ADMIN",
-        "",
-        "The bot must be a group admin to change the group description.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
-    );
-    return;
   }
 
   try {
+    const metadata = await ctx.sock.groupMetadata(ctx.jid);
+
+    if (!await isGroupAdmin(ctx.sock, metadata, ctx.sender)) {
+      return ctx.send("❌ ADMIN ONLY\n\nOnly group admins can change the description.");
+    }
+
+    if (!await isBotGroupAdmin(ctx.sock, metadata)) {
+      return ctx.send("❌ BOT MUST BE ADMIN\n\nMake the bot a group admin first.");
+    }
+
     await ctx.sock.groupUpdateDescription(
       ctx.jid,
       description
     );
 
     await ctx.send(
-      [
-        "✅ GROUP DESCRIPTION UPDATED",
-        "",
-        `📝 ${description}`,
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
-    );
-  } catch (error) {
-    console.error(
-      "[SETDESC] Error:",
-      error?.stack ||
-        error
+      `✅ GROUP DESCRIPTION UPDATED\n\n📝 ${description}\n\n🦁 TECH BY TOPFEROS MD 🐑`
     );
 
+    return { success: true };
+
+  } catch (error) {
+    console.error("[SETDESC]", error?.stack || error);
+
     await ctx.send(
-      [
-        "❌ DESCRIPTION UPDATE FAILED",
-        "",
-        "I could not change the group description.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+      `❌ DESCRIPTION UPDATE FAILED\n\n${error.message || "Unknown WhatsApp error."}`
     );
+
+    return { success: false };
   }
 }
 
-registerCommand(
-  "setdesc",
-  setGroupDescriptionCommand,
-  {
-    aliases: [
-      "groupdesc",
-      "setbio"
-    ],
-    description:
-      "Change the current group description.",
-    usage:
-      ".setdesc Group description",
-    category:
-      "GROUP"
-  }
-);
+registerCommand("setdesc", setGroupDescriptionCommand, {
+  aliases: ["groupdesc", "setbio"],
+  description: "Change the group description.",
+  usage: ".setdesc <description>",
+  category: "GROUP"
+});
 
-module.exports = {
-  setGroupDescriptionCommand
-};
+module.exports = { setGroupDescriptionCommand };
