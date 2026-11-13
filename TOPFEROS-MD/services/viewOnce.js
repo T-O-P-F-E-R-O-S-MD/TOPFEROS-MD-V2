@@ -4,7 +4,7 @@
 // 🦁 TOPFEROS MD V2.0.0
 // MEDIA SERVICE
 // Compatible with commands/vv2.js
-// Baileys 6.7.x
+// Baileys 7.0.0-rc14
 
 const {
   downloadContentFromMessage
