@@ -701,6 +701,97 @@ function unwrapMessage(message) {
   return content;
 }
 
+async function processMedia(ctx, sendBoth = false) {
+  const { sock, message } = ctx;
+
+  const chatId =
+    ctx.jid ||
+    message?.key?.remoteJid;
+
+  const senderId = normalizeJid(
+    ctx.sender ||
+    message?.key?.participant ||
+    (message?.key?.fromMe ? sock?.user?.id : chatId)
+  );
+
+  if (!sock || !chatId) {
+    return { success: false };
+  }
+
+  const quoted = getQuotedMessage(message);
+
+  if (!quoted) {
+    await ctx.send(
+      "❌ Reponn sou yon foto, videyo oswa odyo nòmal ak .vv2 oswa .vvv."
+    );
+
+    return { success: false };
+  }
+
+  if (getViewOnceMessage(quoted.download)) {
+    await ctx.send(
+      "🔒 Kòmand sa a pa telechaje ni transfere medya View Once."
+    );
+
+    return { success: false };
+  }
+
+  const media = getNormalMedia(quoted.download);
+
+  if (!media) {
+    await ctx.send(
+      "❌ Mwen pa jwenn medya nòmal nan mesaj ou reponn lan."
+    );
+
+    return { success: false };
+  }
+
+  try {
+    const buffer = await downloadNormalMedia(media);
+    const payload = buildPayload(media, buffer);
+
+    if (!sendBoth || !senderId || senderId === chatId) {
+      await sock.sendMessage(chatId, payload);
+
+      return { success: true };
+    }
+
+    await sock.sendMessage(senderId, payload);
+
+    const sent = await sock.sendMessage(chatId, payload);
+
+    if (sent?.key) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      try {
+        await sock.sendMessage(chatId, {
+          delete: sent.key
+        });
+      } catch (error) {
+        console.error(
+          "[TOPFEROS MD] Delete error:",
+          error.message
+        );
+      }
+    }
+
+    return {
+      success: true,
+      dmSent: true,
+      chatSent: true
+    };
+  } catch (error) {
+    console.error(
+      "[TOPFEROS MD MEDIA]",
+      error.stack || error.message || error
+    );
+
+    await ctx.send("❌ Transfè medya a echwe.");
+
+    return { success: false };
+  }
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 📦 EXPORT
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
