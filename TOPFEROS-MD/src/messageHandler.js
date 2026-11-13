@@ -1143,23 +1143,22 @@ registerCommand(
 /*
 |--------------------------------------------------------------------------
 | COMMAND: VV2
-| TOPFEROS MD V2.0.0
 |--------------------------------------------------------------------------
 */
 
 registerCommand(
-  vv2CommandModule.name,
-  async (ctx) => {
-    return await vv2Command(ctx);
-  },
+  "vv2",
+  async (ctx) => await vv2Command(ctx),
   {
-    aliases: vv2CommandModule.aliases,
-    description: vv2CommandModule.description,
-    usage: vv2CommandModule.usage,
+    aliases: Array.isArray(vv2CommandModule.aliases)
+      ? vv2CommandModule.aliases
+      : [],
+    description:
+      vv2CommandModule.description || "Trete medya nòmal.",
+    usage: vv2CommandModule.usage || ".vv2",
     category: "MEDIA"
   }
 );
-
 
 /*
 |--------------------------------------------------------------------------
