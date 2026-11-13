@@ -4,11 +4,11 @@
 // 🦁 TOPFEROS MD V2.0.0
 // MEDIA SERVICE
 // Compatible with commands/vv2.js
-// Baileys 7.x — TOPFEROS MD V2.0.0
+// Baileys 6.7.x
 
 const {
-  getBaileys
-} = require("./baileysRuntime");
+  downloadContentFromMessage
+} = require("@whiskeysockets/baileys");
 
 const MEDIA_TYPES = [
   ["imageMessage", "image"],
@@ -70,63 +70,22 @@ function findMedia(message) {
   if (!content) return null;
 
   for (const [key, type] of MEDIA_TYPES) {
-    const media = content[key];
-
-    if (!media) continue;
-
-    // Verifye si medya a gen enfòmasyon
-    // Baileys bezwen pou telechajman.
-    if (
-      !media.url &&
-      !media.directPath
-    ) {
-      console.warn(
-        `[VV2] Media ${type} pa gen url/directPath.`
-      );
-
-      continue;
+    if (content[key]) {
+      return {
+        type,
+        media: content[key]
+      };
     }
-
-    return {
-      type,
-      media
-    };
   }
 
   return null;
 }
 
 async function downloadMedia(media, type) {
-  if (!media || !type) {
-    throw new Error(
-      "Media oswa kalite medya a manke."
-    );
-  }
-
-  const baileys = await getBaileys();
-
-  const downloadContentFromMessage =
-    baileys.downloadContentFromMessage ||
-    baileys.default?.downloadContentFromMessage;
-
-  if (
-    typeof downloadContentFromMessage !== "function"
-  ) {
-    throw new Error(
-      "Baileys downloadContentFromMessage pa disponib."
-    );
-  }
-
   const stream = await downloadContentFromMessage(
     media,
     type
   );
-
-  if (!stream || !stream[Symbol.asyncIterator]) {
-    throw new Error(
-      "Baileys pa retounen yon stream medya valab."
-    );
-  }
 
   const chunks = [];
 
@@ -134,15 +93,7 @@ async function downloadMedia(media, type) {
     chunks.push(Buffer.from(chunk));
   }
 
-  const buffer = Buffer.concat(chunks);
-
-  if (!buffer.length) {
-    throw new Error(
-      "Telechajman medya a retounen yon fichye vid."
-    );
-  }
-
-  return buffer;
+  return Buffer.concat(chunks);
 }
 
 async function handleVV2(context) {
