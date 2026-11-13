@@ -46,7 +46,6 @@ const groupPrinciplesService =
 
 const vv2CommandModule =
   require("../commands/vv2");
-
 const vv2Command =
   vv2CommandModule.execute;
 
@@ -209,6 +208,38 @@ function registerCommand(name, handler, options = {}) {
 
   return commands.get(normalized);
 }
+
+/*
+|--------------------------------------------------------------------------
+| TOPFEROS MD V2.0.0
+| REGISTER VV2 AND VVV COMMANDS
+|--------------------------------------------------------------------------
+*/
+
+registerCommand(
+  "vv2",
+  async (ctx) => {
+    return vv2Command(ctx);
+  },
+  {
+    aliases: ["vv"],
+    description: "Process a replied View Once message.",
+    usage: ".vv2",
+    category: "MEDIA"
+  }
+);
+
+registerCommand(
+  "vvv",
+  async (ctx) => {
+    return vvvCommand(ctx);
+  },
+  {
+    description: "Process permitted replied media.",
+    usage: ".vvv",
+    category: "MEDIA"
+  }
+);
 
 /*
 |--------------------------------------------------------------------------
