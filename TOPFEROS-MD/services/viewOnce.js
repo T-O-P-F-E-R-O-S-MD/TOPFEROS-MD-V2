@@ -709,5 +709,13 @@ module.exports = {
 
   execute,
   handleReplyForward,
-  handleVV2
+  handleVV2,
+  unwrapMessage,
+  getViewOnceMessage,
+  getViewOnceMedia,
+  getQuotedMessage,
+  getNormalMedia,
+  vv2Command,
+  vvvCommand,
+  handleAutoViewOnce
 };
