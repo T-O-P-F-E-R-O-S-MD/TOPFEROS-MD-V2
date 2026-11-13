@@ -63,22 +63,37 @@ function getQuotedMessage(message) {
 
   return null;
 }
-
 function findMedia(message) {
   const content = unwrapMessage(message);
 
   if (!content) return null;
 
   for (const [key, type] of MEDIA_TYPES) {
-    if (content[key]) {
-      return {
-        type,
-        media: content[key]
-      };
+    const media = content[key];
+
+    if (!media) continue;
+
+    // Verifye si se yon medya ki gen enfòmasyon
+    // Baileys bezwen pou telechajman.
+    if (
+      !media.url &&
+      !media.directPath
+    ) {
+      console.warn(
+        `[VV2] Media ${type} pa gen url/directPath.`
+      );
+
+      continue;
     }
+
+    return {
+      type,
+      media
+    };
   }
 
   return null;
+}
 }
 async function downloadMedia(media, type) {
   if (!media || !type) {
