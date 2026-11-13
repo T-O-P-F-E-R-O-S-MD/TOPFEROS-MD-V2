@@ -181,11 +181,45 @@ async function promoteCommand(ctx) {
     };
   }
 
-  const botIsAdmin =
-  await isBotGroupAdmin(
-    ctx.sock,
-    metadata
+  
+  // CHECK COMMAND SENDER ADMIN PERMISSION
+
+  const senderJid = normalizeJid(ctx.sender).toLowerCase();
+
+  const senderParticipant = metadata.participants.find(
+    participant =>
+      [
+        participant.id,
+        participant.jid,
+        participant.phoneNumber
+      ].some(
+        id =>
+          normalizeJid(id).toLowerCase() === senderJid
+      )
   );
+
+  if (
+    !senderParticipant ||
+    (
+      senderParticipant.admin !== "admin" &&
+      senderParticipant.admin !== "superadmin"
+    )
+  ) {
+    await ctx.send(
+      [
+        "❌ ADMIN ONLY",
+        "",
+        "Only group admins can promote members.",
+        "",
+        "🦁 TECH BY TOPFEROS MD 🐑"
+      ].join("\n")
+    );
+
+    return {
+      success: false,
+      reason: "Sender is not a group admin."
+    };
+  }
 
 if (!botIsAdmin) {
   await ctx.send(
