@@ -63,6 +63,7 @@ function getQuotedMessage(message) {
 
   return null;
 }
+
 function findMedia(message) {
   const content = unwrapMessage(message);
 
