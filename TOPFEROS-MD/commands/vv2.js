@@ -3,8 +3,6 @@
 
 const viewonce = require("../services/viewonce");
 
-const viewonce = require("./viewonce");
-
 async function execute(context) {
   const {
     sock,
