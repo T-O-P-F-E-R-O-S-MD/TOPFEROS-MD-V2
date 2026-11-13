@@ -10,12 +10,35 @@ const {
   downloadContentFromMessage
 } = require("@whiskeysockets/baileys");
 
-const MEDIA_TYPES = [
-  ["imageMessage", "image"],
-  ["videoMessage", "video"],
-  ["audioMessage", "audio"],
-  ["documentMessage", "document"]
-];
+function unwrapMessage(input) {
+  const message = input?.message || input;
+
+  if (!message) return null;
+
+  // Refize trete mesaj View Once.
+  if (
+    message.viewOnceMessage ||
+    message.viewOnceMessageV2 ||
+    message.viewOnceMessageV2Extension
+  ) {
+    return null;
+  }
+
+  const normalized = normalizeMessageContent(message);
+
+  if (!normalized) return null;
+
+  // Double-check apre normalisation.
+  if (
+    normalized.viewOnceMessage ||
+    normalized.viewOnceMessageV2 ||
+    normalized.viewOnceMessageV2Extension
+  ) {
+    return null;
+  }
+
+  return normalized;
+}
 
 function unwrapMessage(input) {
   let current = input?.message || input;
