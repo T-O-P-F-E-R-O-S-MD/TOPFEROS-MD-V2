@@ -44,12 +44,10 @@ const groupPrinciplesService =
   require("../services/groupPrinciples");
 
 // 🦁 TOPFEROS MD V2.0.0
-// VV2 COMMAND CONNECTION
+// VIEW ONCE / MEDIA SERVICE
 
-const vv2CommandModule =
-  require("../commands/vv2");
-const vv2Command =
-  vv2CommandModule.execute;
+const viewonce =
+  require("../services/viewOnce");
 
 // 🦁 TOPFEROS MD V2.0.0
 // VVV COMMAND
@@ -220,10 +218,11 @@ function registerCommand(name, handler, options = {}) {
 registerCommand(
   "vv2",
   async (ctx) => {
-    return vv2Command(ctx);
+    return await viewonce.vv2Command(ctx);
   },
   {
-    description: "Trete medya nòmal ki site nan mesaj la.",
+    aliases: [],
+    description: "Process quoted media.",
     usage: ".vv2",
     category: "MEDIA"
   }
@@ -231,40 +230,18 @@ registerCommand(
 
 /*
 |--------------------------------------------------------------------------
-| COMMAND: VV2
-| TOPFEROS MD V2.0.0
-|--------------------------------------------------------------------------
-*/
-
-registerCommand(
-  vv2CommandModule.name,
-  async (ctx) => {
-    return await vv2Command(ctx);
-  },
-  {
-    aliases: vv2CommandModule.aliases,
-    description: vv2CommandModule.description,
-    usage: vv2CommandModule.usage,
-    category: "MEDIA"
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
 | COMMAND: VVV
-| TOPFEROS MD V2.0.0
 |--------------------------------------------------------------------------
 */
 
 registerCommand(
   "vvv",
   async (ctx) => {
-    await vvvCommand(ctx);
+    return await viewonce.vvvCommand(ctx);
   },
   {
     aliases: [],
-    description: "Send media to chat and DM",
+    description: "Send quoted media to DM and chat.",
     usage: ".vvv",
     category: "MEDIA"
   }
@@ -1474,38 +1451,6 @@ async function handleMessageCore(sock, message, sessionId) {
     }
 
     const jid = getChatJid(message);
-
-       /*
-    |--------------------------------------------------------------------------
-    | AUTO VIEW ONCE IN PRIVATE DM
-    |--------------------------------------------------------------------------
-    */
-
-    if (
-      !isGroup(jid) &&
-      !isStatus(jid) &&
-      !message?.key?.fromMe &&
-      typeof handleAutoViewOnce === "function"
-    ) {
-      try {
-        const autoViewOnce =
-          await handleAutoViewOnce(sock, message);
-
-        if (autoViewOnce?.success) {
-          return {
-            success: true,
-            command: "auto-viewonce",
-            result: autoViewOnce,
-            sessionId: sessionId || null
-          };
-        }
-      } catch (error) {
-        console.error(
-          "[AUTO VIEW ONCE]",
-          error?.stack || error
-        );
-      }
-    }
 
 /*
 |--------------------------------------------------------------------------
