@@ -80,16 +80,37 @@ function findMedia(message) {
 
   return null;
 }
-
 async function downloadMedia(media, type) {
-  const {
-    downloadContentFromMessage
-  } = await getBaileys();
+  if (!media || !type) {
+    throw new Error(
+      "Media oswa kalite medya a manke."
+    );
+  }
+
+  const baileys = await getBaileys();
+
+  const downloadContentFromMessage =
+    baileys.downloadContentFromMessage ||
+    baileys.default?.downloadContentFromMessage;
+
+  if (
+    typeof downloadContentFromMessage !== "function"
+  ) {
+    throw new Error(
+      "Baileys downloadContentFromMessage pa disponib."
+    );
+  }
 
   const stream = await downloadContentFromMessage(
     media,
     type
   );
+
+  if (!stream || !stream[Symbol.asyncIterator]) {
+    throw new Error(
+      "Baileys pa retounen yon stream medya valab."
+    );
+  }
 
   const chunks = [];
 
@@ -97,9 +118,16 @@ async function downloadMedia(media, type) {
     chunks.push(Buffer.from(chunk));
   }
 
-  return Buffer.concat(chunks);
-}
+  const buffer = Buffer.concat(chunks);
 
+  if (!buffer.length) {
+    throw new Error(
+      "Telechajman medya a retounen yon fichye vid."
+    );
+  }
+
+  return buffer;
+}
 async function handleVV2(context) {
   const { sock, message } = context || {};
 
