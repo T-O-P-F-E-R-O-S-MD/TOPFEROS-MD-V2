@@ -1124,47 +1124,6 @@ registerCommand(
 
 /*
 |--------------------------------------------------------------------------
-| COMMAND: VV2
-| TOPFEROS MD V2.0.0
-|--------------------------------------------------------------------------
-*/
-
-registerCommand(
-  vv2CommandModule.name,
-  async (ctx) => {
-    return await vv2Command(ctx);
-  },
-  {
-    aliases: vv2CommandModule.aliases,
-    description: vv2CommandModule.description,
-    usage: vv2CommandModule.usage,
-    category: "MEDIA"
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| COMMAND: VVV
-| TOPFEROS MD V2.0.0
-|--------------------------------------------------------------------------
-*/
-
-registerCommand(
-  "vvv",
-  async (ctx) => {
-    await vvvCommand(ctx);
-  },
-  {
-    aliases: [],
-    description: "Send media to chat and DM",
-    usage: ".vvv",
-    category: "MEDIA"
-  }
-);
-
-/*
-|--------------------------------------------------------------------------
 | COMMAND: VIDEO
 |--------------------------------------------------------------------------
 */
