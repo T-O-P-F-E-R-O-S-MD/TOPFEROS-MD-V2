@@ -1,704 +1,205 @@
 "use strict";
 
 // 🦁 TOPFEROS MD V2.0.0
-// MEDIA SERVICE
-// Compatible with commands/vv2.js
-// Baileys 7.x
+// MEDIA SERVICE — VV2 / VVV
 
 const {
   downloadContentFromMessage
 } = require("@whiskeysockets/baileys");
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 👁️ TOPFEROS MD — VIEW ONCE SYSTEM
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// .vv2
-// → Reply sou View Once
-// → Dekode
-// → Voye nan MENM CHAT la
-//
-// .vvv
-// → Reply sou View Once
-// → Dekode
-// → Voye nan DM BOT la
-//
-// ❌ status.js pa itilize pou View Once
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const MEDIA_TYPES = [
+  ["imageMessage", "image"],
+  ["videoMessage", "video"],
+  ["audioMessage", "audio"],
+  ["documentMessage", "document"]
+];
 
+function unwrapMessage(input) {
+  let content = input?.message || input;
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 🔓 UNWRAP VIEW ONCE
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-function unwrapViewOnce(message) {
-  let current =
-    message?.message ||
-    message ||
-    null;
-
-  let safety = 0;
-
-  const wrappers = [
-    "ephemeralMessage",
-    "viewOnceMessage",
-    "viewOnceMessageV2",
-    "viewOnceMessageV2Extension",
-    "documentWithCaptionMessage"
-  ];
-
-  while (
-    current &&
-    safety < 10
-  ) {
-    safety++;
-
-    let found = false;
-
-    for (const key of wrappers) {
-      if (
-        current[key] &&
-        typeof current[key] === "object"
-      ) {
-        current =
-          current[key]?.message ||
-          current[key];
-
-        found = true;
-        break;
-      }
+  for (let i = 0; i < 10; i++) {
+    if (!content || typeof content !== "object") {
+      return null;
     }
 
-    if (!found) {
-      break;
+    if (content.ephemeralMessage?.message) {
+      content = content.ephemeralMessage.message;
+      continue;
     }
-  }
 
-  return current;
-}
+    if (content.documentWithCaptionMessage?.message) {
+      content = content.documentWithCaptionMessage.message;
+      continue;
+    }
 
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📦 GET MEDIA TYPE
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-function getViewOnceMedia(message) {
-  const msg =
-    unwrapViewOnce(message);
-
-  if (!msg) {
-    return null;
-  }
-
-  if (msg.imageMessage) {
-    return {
-      type: "image",
-      media: msg.imageMessage
-    };
-  }
-
-  if (msg.videoMessage) {
-    return {
-      type: "video",
-      media: msg.videoMessage
-    };
-  }
-
-  if (msg.audioMessage) {
-    return {
-      type: "audio",
-      media: msg.audioMessage
-    };
-  }
-
-  if (msg.documentMessage) {
-    return {
-      type: "document",
-      media: msg.documentMessage
-    };
+    return content;
   }
 
   return null;
 }
 
+function getViewOnceMessage(input) {
+  const content = unwrapMessage(input);
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📥 DOWNLOAD VIEW ONCE
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (!content) return null;
 
-async function downloadViewOnce(
-  media,
-  type
-) {
-  if (!media || !type) {
-    return null;
-  }
+  const keys = [
+    "viewOnceMessage",
+    "viewOnceMessageV2",
+    "viewOnceMessageV2Extension"
+  ];
 
-  try {
-    const stream =
-      await downloadContentFromMessage(
-        media,
-        type
-      );
-
-    const chunks = [];
-
-    for await (
-      const chunk of stream
-    ) {
-      chunks.push(chunk);
+  for (const key of keys) {
+    if (content[key]?.message) {
+      return content[key].message;
     }
-
-    return Buffer.concat(chunks);
-
-  } catch (error) {
-    console.error(
-      "❌ VIEW ONCE DOWNLOAD ERROR:",
-      error?.message ||
-      error
-    );
-
-    return null;
   }
+
+  return null;
 }
 
+function getViewOnceMedia(input) {
+  const content = getViewOnceMessage(input);
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 💬 GET QUOTED MESSAGE
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (!content) return null;
 
-function getQuotedMessage(message) {
-  return (
-    message
-      ?.message
-      ?.extendedTextMessage
-      ?.contextInfo
-      ?.quotedMessage ||
+  for (const [key, type] of MEDIA_TYPES) {
+    if (content[key]) {
+      return {
+        type,
+        message: content[key]
+      };
+    }
+  }
 
-    message
-      ?.message
-      ?.imageMessage
-      ?.contextInfo
-      ?.quotedMessage ||
-
-    message
-      ?.message
-      ?.videoMessage
-      ?.contextInfo
-      ?.quotedMessage ||
-
-    message
-      ?.message
-      ?.documentMessage
-      ?.contextInfo
-      ?.quotedMessage ||
-
-    null
-  );
+  return null;
 }
 
+function getQuotedMessage(input) {
+  const content = unwrapMessage(input);
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 👁️ VV2
-// DECODE → MENM CHAT
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (!content) return null;
 
-async function handleVV2(context) {
-  const {
-    sock,
-    message
-  } = context || {};
+  const queue = [content];
+  const visited = new Set();
 
-  if (!sock || !message) {
-    return false;
-  }
-
-  const chatId =
-    message?.key?.remoteJid;
-
-  if (!chatId) {
-    return false;
-  }
-
-  try {
-    const quoted =
-      getQuotedMessage(
-        message
-      );
-
-    if (!quoted) {
-      return false;
-    }
-
-    const mediaInfo =
-      getViewOnceMedia(
-        quoted
-      );
-
-    if (!mediaInfo) {
-      return false;
-    }
-
-    const buffer =
-      await downloadViewOnce(
-        mediaInfo.media,
-        mediaInfo.type
-      );
-
-    if (!buffer) {
-      return false;
-    }
-
-    const media =
-      mediaInfo.media;
-
-    const caption =
-      media?.caption ||
-      "";
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 🖼️ IMAGE
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  while (queue.length > 0) {
+    const current = queue.shift();
 
     if (
-      mediaInfo.type === "image"
+      !current ||
+      typeof current !== "object" ||
+      visited.has(current)
     ) {
-      await sock.sendMessage(
-        chatId,
-        {
-          image: buffer,
-
-          ...(caption
-            ? {
-                caption
-              }
-            : {})
-        },
-        {
-          quoted: message
-        }
-      );
-
-      return true;
+      continue;
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 🎥 VIDEO
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    if (
-      mediaInfo.type === "video"
-    ) {
-      await sock.sendMessage(
-        chatId,
-        {
-          video: buffer,
-
-          ...(caption
-            ? {
-                caption
-              }
-            : {}),
-
-          mimetype:
-            media?.mimetype ||
-            "video/mp4"
-        },
-        {
-          quoted: message
-        }
-      );
-
-      return true;
-    }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 🎵 AUDIO
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    if (
-      mediaInfo.type === "audio"
-    ) {
-      await sock.sendMessage(
-        chatId,
-        {
-          audio: buffer,
-
-          mimetype:
-            media?.mimetype ||
-            "audio/mp4",
-
-          ptt:
-            Boolean(
-              media?.ptt
-            )
-        },
-        {
-          quoted: message
-        }
-      );
-
-      return true;
-    }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 📄 DOCUMENT
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    if (
-      mediaInfo.type === "document"
-    ) {
-      await sock.sendMessage(
-        chatId,
-        {
-          document: buffer,
-
-          mimetype:
-            media?.mimetype ||
-            "application/octet-stream",
-
-          fileName:
-            media?.fileName ||
-            "TOPFEROS-MD-file",
-
-          ...(caption
-            ? {
-                caption
-              }
-            : {})
-        },
-        {
-          quoted: message
-        }
-      );
-
-      return true;
-    }
-
-    return false;
-
-  } catch (error) {
-    console.error(
-      "❌ VV2 HANDLER ERROR:",
-      error?.stack ||
-      error?.message ||
-      error
-    );
-
-    return false;
-  }
-}
-
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 🤖 GET BOT JID
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-function getBotJid(sock) {
-  const id =
-    sock?.user?.id;
-
-  if (!id) {
-    return null;
-  }
-
-  /*
-   * Baileys ka konn bay:
-   * 509xxxxxxxx:xx@s.whatsapp.net
-   *
-   * Nou retire device ID a pou DM la.
-   */
-
-  if (
-    id.endsWith(
-      "@s.whatsapp.net"
-    )
-  ) {
-    const number =
-      id.split("@")[0]
-        .split(":")[0];
-
-    return (
-      number +
-      "@s.whatsapp.net"
-    );
-  }
-
-  return id;
-}
-
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📩 VIEWONCE → DM BOT
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-async function handleReplyForward(context) {
-  const {
-    sock,
-    message
-  } = context || {};
-
-  if (!sock || !message) {
-    return false;
-  }
-
-  try {
-    const quoted =
-      getQuotedMessage(
-        message
-      );
-
-    if (!quoted) {
-      return false;
-    }
-
-    const mediaInfo =
-      getViewOnceMedia(
-        quoted
-      );
-
-    if (!mediaInfo) {
-      return false;
-    }
-
-    const buffer =
-      await downloadViewOnce(
-        mediaInfo.media,
-        mediaInfo.type
-      );
-
-    if (!buffer) {
-      return false;
-    }
-
-    const botJid =
-      getBotJid(sock);
-
-    if (!botJid) {
-      console.error(
-        "❌ BOT JID PA JWENN."
-      );
-
-      return false;
-    }
-
-    const media =
-      mediaInfo.media;
-
-    const caption =
-      media?.caption ||
-      "";
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 🖼️ IMAGE → BOT DM
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    if (
-      mediaInfo.type === "image"
-    ) {
-      await sock.sendMessage(
-        botJid,
-        {
-          image: buffer,
-
-          ...(caption
-            ? {
-                caption
-              }
-            : {})
-        }
-      );
-
-      return true;
-    }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 🎥 VIDEO → BOT DM
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    if (
-      mediaInfo.type === "video"
-    ) {
-      await sock.sendMessage(
-        botJid,
-        {
-          video: buffer,
-
-          ...(caption
-            ? {
-                caption
-              }
-            : {}),
-
-          mimetype:
-            media?.mimetype ||
-            "video/mp4"
-        }
-      );
-
-      return true;
-    }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 🎵 AUDIO → BOT DM
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    if (
-      mediaInfo.type === "audio"
-    ) {
-      await sock.sendMessage(
-        botJid,
-        {
-          audio: buffer,
-
-          mimetype:
-            media?.mimetype ||
-            "audio/mp4",
-
-          ptt:
-            Boolean(
-              media?.ptt
-            )
-        }
-      );
-
-      return true;
-    }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 📄 DOCUMENT → BOT DM
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    if (
-      mediaInfo.type === "document"
-    ) {
-      await sock.sendMessage(
-        botJid,
-        {
-          document: buffer,
-
-          mimetype:
-            media?.mimetype ||
-            "application/octet-stream",
-
-          fileName:
-            media?.fileName ||
-            "TOPFEROS-MD-file",
-
-          ...(caption
-            ? {
-                caption
-              }
-            : {})
-        }
-      );
-
-      return true;
-    }
-
-    return false;
-
-  } catch (error) {
-    console.error(
-      "❌ VIEW ONCE DM ERROR:",
-      error?.stack ||
-      error?.message ||
-      error
-    );
-
-    return false;
-  }
-}
-
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📋 .VIEWONCE COMMAND
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-async function execute(context) {
-  const {
-    sock,
-    message
-  } = context || {};
-
-  const chatId =
-    message?.key?.remoteJid;
-
-  if (
-    !sock ||
-    !message ||
-    !chatId
-  ) {
-    return;
-  }
-
-  try {
-    const processed =
-      await handleReplyForward(
-        context
-      );
-
-    if (processed) {
-      await sock.sendMessage(
-        chatId,
-        {
-          text:
-            "✅ View Once dekode epi voye nan DM bot la."
-        },
-        {
-          quoted: message
-        }
-      );
-
-      return;
-    }
-
-    await sock.sendMessage(
-      chatId,
-      {
+    visited.add(current);
+
+    if (current.contextInfo?.quotedMessage) {
+      return {
+        download: current.contextInfo.quotedMessage,
         text:
-          "👁️ *VIEW ONCE*\n\n" +
-          "❌ Mwen pa jwenn yon View Once nan reply la.\n\n" +
-          "Reply sou View Once la epi itilize:\n" +
-          "`.viewonce`"
-      },
-      {
-        quoted: message
+          current.contextInfo.quotedMessage.conversation ||
+          current.contextInfo.quotedMessage
+            .extendedTextMessage?.text ||
+          ""
+      };
+    }
+
+    for (const value of Object.values(current)) {
+      if (value && typeof value === "object") {
+        queue.push(value);
       }
-    );
+    }
+  }
 
-  } catch (error) {
-    console.error(
-      "❌ VIEW ONCE COMMAND ERROR:",
-      error?.stack ||
-      error?.message ||
-      error
-    );
+  return null;
+}
 
-    try {
-      await sock.sendMessage(
-        chatId,
-        {
-          text:
-            "❌ Gen yon erè pandan m t ap trete View Once la."
-        },
-        {
-          quoted: message
-        }
-      );
-    } catch (_) {}
+function getNormalMedia(input) {
+  const content = unwrapMessage(input);
+
+  if (!content || getViewOnceMessage(content)) {
+    return null;
+  }
+
+  for (const [key, type] of MEDIA_TYPES) {
+    const item = content[key];
+
+    if (item && !item.viewOnce) {
+      return {
+        type,
+        message: item
+      };
+    }
+  }
+
+  return null;
+}
+
+async function downloadNormalMedia(media) {
+  if (!media?.message || !media?.type) {
+    throw new Error("Invalid media object");
+  }
+
+  const stream = await downloadContentFromMessage(
+    media.message,
+    media.type
+  );
+
+  const chunks = [];
+
+  for await (const chunk of stream) {
+    chunks.push(Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks);
+}
+
+function buildPayload(media, buffer) {
+  const original = media.message;
+
+  switch (media.type) {
+    case "image":
+      return {
+        image: buffer,
+        caption: original.caption || ""
+      };
+
+    case "video":
+      return {
+        video: buffer,
+        caption: original.caption || "",
+        mimetype: original.mimetype || "video/mp4"
+      };
+
+    case "audio":
+      return {
+        audio: buffer,
+        mimetype: original.mimetype || "audio/ogg",
+        ptt: Boolean(original.ptt)
+      };
+
+    case "document":
+      return {
+        document: buffer,
+        mimetype:
+          original.mimetype || "application/octet-stream",
+        fileName: original.fileName || "TOPFEROS-MEDIA"
+      };
+
+    default:
+      throw new Error("Unsupported media type");
   }
 }
 
-function unwrapMessage(message) {
-  if (!message) return null;
-
-  let content = message.message || message;
-
-  if (content.ephemeralMessage?.message) {
-    content = content.ephemeralMessage.message;
+function normalizeJid(jid) {
+  if (!jid || typeof jid !== "string") {
+    return null;
   }
 
-  return content;
+  return jid.replace(/:\d+@/, "@");
 }
 
 async function processMedia(ctx, sendBoth = false) {
@@ -792,117 +293,22 @@ async function processMedia(ctx, sendBoth = false) {
   }
 }
 
-async function processMedia(ctx, sendBoth = false) {
-  const { sock, message } = ctx;
-
-  const chatId =
-    ctx.jid ||
-    message?.key?.remoteJid;
-
-  const senderId = normalizeJid(
-    ctx.sender ||
-    message?.key?.participant ||
-    (message?.key?.fromMe ? sock?.user?.id : chatId)
-  );
-
-  if (!sock || !chatId) {
-    return { success: false };
-  }
-
-  const quoted = getQuotedMessage(message);
-
-  if (!quoted) {
-    await ctx.send(
-      "❌ Reponn sou yon foto, videyo oswa odyo nòmal ak .vv2 oswa .vvv."
-    );
-
-    return { success: false };
-  }
-
-  if (getViewOnceMessage(quoted.download)) {
-    await ctx.send(
-      "🔒 Kòmand sa a pa telechaje ni transfere medya View Once."
-    );
-
-    return { success: false };
-  }
-
-  const media = getNormalMedia(quoted.download);
-
-  if (!media) {
-    await ctx.send(
-      "❌ Mwen pa jwenn medya nòmal nan mesaj ou reponn lan."
-    );
-
-    return { success: false };
-  }
-
-  try {
-    const buffer = await downloadNormalMedia(media);
-    const payload = buildPayload(media, buffer);
-
-    if (!sendBoth || !senderId || senderId === chatId) {
-      await sock.sendMessage(chatId, payload);
-
-      return { success: true };
-    }
-
-    await sock.sendMessage(senderId, payload);
-
-    const sent = await sock.sendMessage(chatId, payload);
-
-    if (sent?.key) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      try {
-        await sock.sendMessage(chatId, {
-          delete: sent.key
-        });
-      } catch (error) {
-        console.error(
-          "[TOPFEROS MD] Delete error:",
-          error.message
-        );
-      }
-    }
-
-    return {
-      success: true,
-      dmSent: true,
-      chatSent: true
-    };
-  } catch (error) {
-    console.error(
-      "[TOPFEROS MD MEDIA]",
-      error.stack || error.message || error
-    );
-
-    await ctx.send("❌ Transfè medya a echwe.");
-
-    return { success: false };
-  }
+async function vv2Command(ctx) {
+  return processMedia(ctx, false);
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📦 EXPORT
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function vvvCommand(ctx) {
+  return processMedia(ctx, true);
+}
+
+async function handleAutoViewOnce() {
+  return {
+    success: false,
+    handled: false
+  };
+}
 
 module.exports = {
-  name: "viewonce",
-
-  aliases: [
-    "vreply",
-    "vforward"
-  ],
-
-  description:
-    "Dekode View Once epi voye li nan DM bot la.",
-
-  usage: ".vvv",
-
-  execute,
-  handleReplyForward,
-  handleVV2,
   unwrapMessage,
   getViewOnceMessage,
   getViewOnceMedia,
