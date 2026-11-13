@@ -1728,6 +1728,36 @@ if (shouldContinue) {
 
 /*
 |--------------------------------------------------------------------------
+| TOPFEROS MD V2.0.0
+| VIEW ONCE COMMAND CONNECTION
+|--------------------------------------------------------------------------
+*/
+
+// VV2
+registerCommand(
+  "vv2",
+  vv2Command,
+  {
+    aliases: ["vv"],
+    description: "Process quoted media using View Once service.",
+    usage: ".vv2",
+    category: "MEDIA"
+  }
+);
+
+// VVV
+registerCommand(
+  "vvv",
+  vvvCommand,
+  {
+    description: "Process quoted media using View Once service.",
+    usage: ".vvv",
+    category: "MEDIA"
+  }
+);
+
+/*
+|--------------------------------------------------------------------------
 | COMMANDS: SAVE / SEND WITHOUT PREFIX
 |--------------------------------------------------------------------------
 */
