@@ -1,7 +1,7 @@
 
 "use strict";
 
-const viewonce = require("../services/viewonce");
+const viewonce = require("../services/viewOnce");
 
 // 🦁 TOPFEROS MD V2.0.0
 // VVV COMMAND
