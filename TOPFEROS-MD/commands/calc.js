@@ -1,161 +1,57 @@
+
 "use strict";
 
-// ╔════════════════════════════════════════════════════╗
-// ║              🦁 TOPFEROS MD V2.0.0               ║
-// ║                  CALCULATOR COMMAND              ║
-// ╚════════════════════════════════════════════════════╝
-
-const {
-  registerCommand
-} = require("../src/messageHandler");
+const { registerCommand } = require("../src/messageHandler");
 
 function calculate(expression) {
-  const cleaned =
-    String(expression)
-      .replace(/\s+/g, "")
-      .trim();
+  const input = String(expression || "").replace(/\s+/g, "");
 
-  if (!cleaned) {
-    throw new Error(
-      "Empty expression."
-    );
+  if (!input) throw new Error("Ekri yon kalkil.");
+
+  if (!/^[0-9+\-*/().%]+$/.test(input)) {
+    throw new Error("Kalkil sa a pa valab.");
   }
 
-  // Allow only basic mathematical characters.
-  if (
-    !/^[0-9+\-*/().%]+$/.test(
-      cleaned
-    )
-  ) {
-    throw new Error(
-      "Invalid characters."
-    );
+  if (/[+\-*/%.]{2,}/.test(input.replace(/^-/, ""))) {
+    throw new Error("Operatè pa valab.");
   }
 
-  // Prevent unsafe or malformed operators.
-  if (
-    /(?:\*\*|\/\/)/.test(
-      cleaned
-    )
-  ) {
-    throw new Error(
-      "Unsupported operator."
-    );
-  }
+  const result = Function('"use strict"; return (' + input + ')')();
 
-  const result =
-    Function(
-      `"use strict"; return (${cleaned});`
-    )();
-
-  if (
-    typeof result !== "number" ||
-    !Number.isFinite(result)
-  ) {
-    throw new Error(
-      "Invalid calculation."
-    );
+  if (!Number.isFinite(result)) {
+    throw new Error("Rezilta pa valab.");
   }
 
   return result;
 }
 
 async function calcCommand(ctx) {
-  const expression =
-    String(ctx.text || "").trim();
-
-  if (!expression) {
-    await ctx.send(
-      [
-        "❌ EXPRESSION REQUIRED",
-        "",
-        "Use:",
-        `${ctx.prefix}calc <calculation>`,
-        "",
-        "Examples:",
-        `${ctx.prefix}calc 25 + 75`,
-        `${ctx.prefix}calc 10 * 5 / 2`,
-        `${ctx.prefix}calc (20 + 10) * 2`,
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
-    );
-
-    return {
-      success: false,
-      reason:
-        "No expression provided."
-    };
-  }
-
   try {
-    const result =
-      calculate(
-        expression
-      );
+    const result = calculate(ctx.text);
 
     await ctx.send(
-      [
-        "🧮 CALCULATOR",
-        "",
-        `Expression: ${expression}`,
-        `Result: ${result}`,
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+      `🧮 CALCULATOR\n\n` +
+      `Expression: ${ctx.text}\n` +
+      `Result: ${result}\n\n` +
+      `🦁 TECH BY TOPFEROS MD 🐑`
     );
 
-    return {
-      success: true,
-      expression,
-      result
-    };
+    return { success: true, result };
   } catch (error) {
-    console.error(
-      "[CALC] Error:",
-      error?.stack ||
-        error
-    );
-
     await ctx.send(
-      [
-        "❌ CALCULATION FAILED",
-        "",
-        "Please use a valid mathematical expression.",
-        "",
-        "Example:",
-        `${ctx.prefix}calc (20 + 10) * 2`,
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+      `❌ CALC ERROR\n\n${error.message}\n\n` +
+      `Example: ${ctx.prefix}calc 25+75`
     );
 
-    return {
-      success: false,
-      error:
-        error?.message ||
-        String(error)
-    };
+    return { success: false };
   }
 }
 
-registerCommand(
-  "calc",
-  calcCommand,
-  {
-    aliases: [
-      "calculate",
-      "math"
-    ],
-    description:
-      "Calculate a basic mathematical expression.",
-    usage:
-      ".calc <calculation>",
-    category:
-      "UTILITY"
-  }
-);
+registerCommand("calc", calcCommand, {
+  aliases: ["calculate", "math"],
+  description: "Mathematical calculator",
+  usage: ".calc 25+75",
+  category: "UTILITY"
+});
 
-module.exports = {
-  calcCommand
-};
+module.exports = { calcCommand };
