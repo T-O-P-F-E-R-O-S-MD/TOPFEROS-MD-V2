@@ -29,8 +29,6 @@ const sessionManager =
 const settingPanel =
   require("./settingPanel");
 
-const viewonce = require("../services/viewOnce");
-
 const antiSpam = require("../services/antiSpam");
 
 const antiBotService =
