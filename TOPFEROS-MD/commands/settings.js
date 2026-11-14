@@ -250,73 +250,93 @@ async function settingsCommand(ctx) {
 
     await sendOverviewWithLogo(ctx, overview);
 
-// ============================================================
-// MESSAGE 2: SETTINGS LOGIN + ACCESS CODE
-// ============================================================
+    // ============================================================
+    // MESSAGE 2: SETTINGS LOGIN + ACCESS CODE
+    // ============================================================
 
-try {
-  const accessCode = String(code).toUpperCase();
+    const accessCode = String(code).toUpperCase();
 
-  await ctx.sock.sendMessage(ctx.jid, {
-    interactiveMessage: {
-      body: {
-        text: `🔐 TOPFEROS MD SETTINGS\n\n📱 Session: ${sessionId}\n\n🔑 Access Code: ${accessCode}\n\n🌐 Panel: ${panelUrl}`
-      },
-      footer: {
-        text: "🦁 TECH BY TOPFEROS MD 🐑"
-      },
-      nativeFlowMessage: {
-        buttons: [
-          {
-            name: "cta_copy",
-            buttonParamsJson: JSON.stringify({
-              display_text: "📋 Copy Settings Code",
-              copy_code: accessCode
-            })
+    try {
+      const copyMessage = generateWAMessageFromContent(
+        ctx.jid,
+        {
+          viewOnceMessage: {
+            message: {
+              interactiveMessage:
+                proto.Message.InteractiveMessage.create({
+                  body:
+                    proto.Message.InteractiveMessage.Body.create({
+                      text: [
+                        "🔐 *TOPFEROS MD SETTINGS LOGIN*",
+                        "",
+                        `📱 Session: ${sessionId}`,
+                        "",
+                        `🔑 Access Code: ${accessCode}`,
+                        "",
+                        `🌐 Panel: ${panelUrl}`
+                      ].join("\n")
+                    }),
+                  footer:
+                    proto.Message.InteractiveMessage.Footer.create({
+                      text: "🦁 TECH BY TOPFEROS MD 🐑"
+                    }),
+                  nativeFlowMessage:
+                    proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                      buttons: [
+                        {
+                          name: "cta_copy",
+                          buttonParamsJson: JSON.stringify({
+                            display_text: "📋 Copy Settings Code",
+                            copy_code: accessCode
+                          })
+                        }
+                      ]
+                    })
+                })
+            }
           }
-        ]
-      }
+        },
+        {
+          userJid: ctx.sock.user.id
+        }
+      );
+
+      await ctx.sock.relayMessage(
+        ctx.jid,
+        copyMessage.message,
+        {
+          messageId: copyMessage.key.id
+        }
+      );
+
+    } catch (copyError) {
+      console.error(
+        "[SETTINGS COPY BUTTON ERROR]",
+        copyError?.stack || copyError
+      );
+
+      await ctx.send(
+        `🔐 Settings Code: ${accessCode}\n📋 Ou ka kopye kòd la manyèlman.`
+      );
     }
-  });
 
-} catch (error) {
-  console.error("[SETTINGS COPY CODE ERROR]", error);
-}
-      userJid: ctx.sock.user.id
-    }
-  );
+    // ============================================================
+    // MESSAGE 3: SETTINGS INSTRUCTIONS
+    // ============================================================
 
-  await ctx.sock.relayMessage(
-    ctx.jid,
-    copyMessage.message,
-    {
-      messageId: copyMessage.key.id
-    }
-  );
-} catch (copyError) {
-  console.error(
-    "[SETTINGS COPY BUTTON ERROR]",
-    copyError?.stack || copyError
-  );
-}
-
-// ============================================================
-// MESSAGE 3: SETTINGS INSTRUCTIONS
-// ============================================================
-
-await ctx.send([
-  "📌 *HOW TO USE SETTINGS PANEL*",
-  "",
-  "1️⃣ Open the Settings Panel link above.",
-  "",
-  "2️⃣ Enter your bot session number.",
-  "",
-  "3️⃣ Enter the 6-character Settings Code.",
-  "",
-  "4️⃣ Verify your session to access the settings.",
-  "",
-  "🦁 *TECH BY TOPFEROS MD* 🐑"
-].join("\n"));
+    await ctx.send([
+      "📌 *HOW TO USE SETTINGS PANEL*",
+      "",
+      "1️⃣ Open the Settings Panel link above.",
+      "",
+      "2️⃣ Enter your bot session number.",
+      "",
+      "3️⃣ Enter the 6-character Settings Code.",
+      "",
+      "4️⃣ Verify your session to access the settings.",
+      "",
+      "🦁 *TECH BY TOPFEROS MD* 🐑"
+    ].join("\n"));
 
   } catch (error) {
     console.error(
