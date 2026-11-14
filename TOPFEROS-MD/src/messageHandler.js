@@ -89,10 +89,8 @@ const {
   hasSession
 } = require("../services/aiChat");
 
-const {
-  saveCommand,
-  sendCommand
-} = require("../commands/status");
+registerCommand("save", saveCommand, ...);
+registerCommand("send", sendCommand, ...);
 
 const {
   playCommand
