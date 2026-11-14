@@ -272,53 +272,53 @@ async function settingsCommand(ctx) {
     ].join("\n"));
 
     // Voye bouton Copy Code la.
-    try {
-      const copyMessage = generateWAMessageFromContent(
-        ctx.jid,
-        {
-          viewOnceMessage: {
-            message: {
-              messageContextInfo: {},
-              interactiveMessage: {
-                body: {
-                  text: "📋 Peze bouton an pou kopye kòd Settings la."
-                },
-                footer: {
-                  text: "🦁 TOPFEROS MD"
-                },
-                nativeFlowMessage: {
-                  buttons: [
-                    {
-                      name: "cta_copy",
-                      buttonParamsJson: JSON.stringify({
-                        display_text: "Copy Settings Code",
-                        copy_code: accessCode
-                      })
-                    }
-                  ]
+   
+try {
+  const copyMessage = generateWAMessageFromContent(
+    ctx.jid,
+    {
+      interactiveMessage:
+        proto.Message.InteractiveMessage.create({
+          body:
+            proto.Message.InteractiveMessage.Body.create({
+              text: "🔐 Copy your 6-character Settings Code"
+            }),
+          footer:
+            proto.Message.InteractiveMessage.Footer.create({
+              text: "🦁 TOPFEROS MD"
+            }),
+          nativeFlowMessage:
+            proto.Message.InteractiveMessage.NativeFlowMessage.create({
+              buttons: [
+                {
+                  name: "cta_copy",
+                  buttonParamsJson: JSON.stringify({
+                    display_text: "📋 Copy Settings Code",
+                    copy_code: accessCode
+                  })
                 }
-              }
-            }
-          }
-        },
-        {
-          userJid: ctx.sock.user.id
-        }
-      );
+              ]
+            })
+        })
+    },
+    {
+      userJid: ctx.sock.user.id
+    }
+  );
 
-      await ctx.sock.relayMessage(
-        ctx.jid,
-        copyMessage.message,
-        {
-          messageId: copyMessage.key.id
-        }
-      );
+  await ctx.sock.relayMessage(
+    ctx.jid,
+    copyMessage.message,
+    {
+      messageId: copyMessage.key.id
+    }
+  );
 
-    } catch (error) {
-      console.error(
-        "[SETTINGS COPY BUTTON ERROR]",
-        error?.stack || error
-      );
+} catch (error) {
+  console.error(
+    "[SETTINGS COPY BUTTON ERROR]",
+    error?.stack || error
+  );
 
       await ctx.send(
         `📋 Settings Code: ${accessCode}\nOu ka kopye kòd la manyèlman.`
