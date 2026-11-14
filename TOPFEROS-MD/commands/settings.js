@@ -257,43 +257,31 @@ async function settingsCommand(ctx) {
 try {
   const accessCode = String(code).toUpperCase();
 
-await ctx.sock.sendMessage(ctx.jid, {
-  interactiveMessage: {
-    body: {
-      text: [
-        "🦁✧･ﾟ: *TOPFEROS MD SETTINGS LOGIN* :･ﾟ✧🐑",
-        "",
-        "📱 *Bot Session Number*",
-        `╰┈➤ ${sessionId}`,
-        "",
-        "🔐 *6-Character Settings Code*",
-        `╰┈➤ ${accessCode}`,
-        "",
-        "🌐 *Web Settings Panel*",
-        `╰┈➤ ${panelUrl}`,
-        "",
-        "✨ Kòd aksè a dwe rete prive.",
-        "",
-        "🦁 *TECH BY TOPFEROS MD* 🐑"
-      ].join("\n")
-    },
-    footer: {
-      text: "🦁 TECH BY TOPFEROS MD 🐑"
-    },
-    nativeFlowMessage: {
-      buttons: [
-        {
-          name: "cta_copy",
-          buttonParamsJson: JSON.stringify({
-            display_text: "📋 Copy Settings Code",
-            copy_code: accessCode
-          })
-        }
-      ]
+  await ctx.sock.sendMessage(ctx.jid, {
+    interactiveMessage: {
+      body: {
+        text: `🔐 TOPFEROS MD SETTINGS\n\n📱 Session: ${sessionId}\n\n🔑 Access Code: ${accessCode}\n\n🌐 Panel: ${panelUrl}`
+      },
+      footer: {
+        text: "🦁 TECH BY TOPFEROS MD 🐑"
+      },
+      nativeFlowMessage: {
+        buttons: [
+          {
+            name: "cta_copy",
+            buttonParamsJson: JSON.stringify({
+              display_text: "📋 Copy Settings Code",
+              copy_code: accessCode
+            })
+          }
+        ]
+      }
     }
-  }
-});
+  });
 
+} catch (error) {
+  console.error("[SETTINGS COPY CODE ERROR]", error);
+}
       userJid: ctx.sock.user.id
     }
   );
