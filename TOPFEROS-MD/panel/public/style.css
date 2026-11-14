@@ -52,22 +52,51 @@ body {
    PANEL BACKGROUND — CONNECTION & SETTINGS
    ========================================================= */
 
+
 .panel-background {
   position: fixed;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
+  background: #07090d;
+}
 
+/* VIDEO KI ANBA FOTO A */
+.panel-background video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* FOTO A SOU VIDEO A, AK TRANSPARANS */
+.panel-background::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   background-image: url("/panel-background.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  opacity: 0.35;
 }
 
+/* KONTNI PANEL LA */
 .panel-page {
   position: relative;
-  z-index: 1;
+  min-height: 100vh;
+  isolation: isolate;
 }
+
+.connect-card {
+  position: relative;
+  z-index: 2;
+}
+
 
 /* =========================================================
    CARD
