@@ -1,192 +1,186 @@
+
 "use strict";
 
-// ╔════════════════════════════════════════════════════╗
-// ║              🦁 TOPFEROS MD V2.0.0               ║
-// ║                   TAKE COMMAND                   ║
-// ╚════════════════════════════════════════════════════╝
+const {
+  downloadContentFromMessage
+} = require("@whiskeysockets/baileys");
+
+const {
+  Sticker
+} = require("wa-sticker-formatter");
 
 const {
   registerCommand
 } = require("../src/messageHandler");
 
-function getQuotedMessage(message) {
-  return (
-    message?.message?.extendedTextMessage
-      ?.contextInfo?.quotedMessage ||
-    null
-  );
-}
+function unwrapMessage(message) {
+  let current = message?.message;
 
-function getText(message) {
-  if (!message) {
-    return "";
+  while (current) {
+    const wrapper =
+      current.ephemeralMessage ||
+      current.viewOnceMessage ||
+      current.viewOnceMessageV2;
+
+    if (!wrapper?.message) break;
+
+    current = wrapper.message;
   }
 
-  return (
-    message.conversation ||
-    message.extendedTextMessage?.text ||
-    message.imageMessage?.caption ||
-    message.videoMessage?.caption ||
-    ""
-  ).trim();
+  return current;
+}
+
+function getQuotedSticker(message) {
+  const content = unwrapMessage(message);
+
+  const context =
+    content?.extendedTextMessage?.contextInfo ||
+    content?.imageMessage?.contextInfo ||
+    content?.videoMessage?.contextInfo;
+
+  const quoted = context?.quotedMessage;
+
+  if (!quoted) return null;
+
+  let current = quoted;
+
+  while (current) {
+    const wrapper =
+      current.ephemeralMessage ||
+      current.viewOnceMessage ||
+      current.viewOnceMessageV2;
+
+    if (!wrapper?.message) break;
+
+    current = wrapper.message;
+  }
+
+  return current?.stickerMessage || null;
+}
+
+async function downloadSticker(stickerMessage) {
+  const stream = await downloadContentFromMessage(
+    stickerMessage,
+    "sticker"
+  );
+
+  const chunks = [];
+
+  for await (const chunk of stream) {
+    chunks.push(Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks);
 }
 
 async function takeCommand(ctx) {
-  const quoted =
-    getQuotedMessage(
-      ctx.message
-    );
-
   const stickerMessage =
-    quoted?.stickerMessage;
+    getQuotedSticker(ctx.message);
 
   if (!stickerMessage) {
-    await ctx.send(
-      [
-        "❌ STICKER REQUIRED",
-        "",
-        "Reply to a sticker with:",
-        `${ctx.prefix}take`,
-        "",
-        "You can also use:",
-        `${ctx.prefix}take Pack Name | Author`,
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+    return ctx.send(
+      "❌ STICKER REQUIRED\n\n" +
+      "Reponn yon sticker epi ekri:\n" +
+      `${ctx.prefix}take\n\n` +
+      "Pou chanje non pack ak author:\n" +
+      `${ctx.prefix}take TOPFEROS | TOPFEROS MD\n\n` +
+      "🦁 TECH BY TOPFEROS MD 🐑"
     );
-
-    return {
-      success: false,
-      reason:
-        "No sticker found."
-    };
   }
 
-  let packName =
-    "TOPFEROS MD";
+  let packName = "TOPFEROS MD";
+  let author = "🦁 TECH BY TOPFEROS MD 🐑";
 
-  let author =
-    "🦁 TECH BY TOPFEROS MD 🐑";
+  const args = String(ctx.text || "").trim();
 
-  const text =
-    getText(
-      ctx.message
+  if (args) {
+    const parts = args.split("|");
+
+    packName = parts[0]?.trim() || packName;
+    author = parts[1]?.trim() || author;
+  }
+
+  if (packName.length > 100 || author.length > 100) {
+    return ctx.send(
+      "❌ Pack name ak author pa dwe depase 100 karaktè."
     );
-
-  if (text) {
-    const parts =
-      text
-        .split("|")
-        .map(
-          (part) =>
-            part.trim()
-        )
-        .filter(Boolean);
-
-    if (parts[0]) {
-      packName =
-        parts[0];
-    }
-
-    if (parts[1]) {
-      author =
-        parts[1];
-    }
   }
 
   try {
-    const media =
-      await ctx.sock.downloadMediaMessage(
-        {
-          key: {
-            remoteJid:
-              ctx.jid,
-            fromMe:
-              false,
-            id:
-              ctx.message?.key?.id ||
-              ""
-          },
-          message: {
-            stickerMessage
-          }
-        },
-        "buffer",
-        {},
-        {
-          logger:
-            ctx.sock?.logger
-        }
-      );
+    await ctx.send(
+      "⏳ TAKE STICKER\n\n" +
+      "M ap telechaje sticker la epi modifye metadata li..."
+    );
 
-    if (!media) {
-      throw new Error(
-        "Sticker download returned no data."
-      );
+    const media = await downloadSticker(stickerMessage);
+
+    if (!media.length) {
+      throw new Error("Sticker download failed.");
+    }
+
+    const sticker = new Sticker(media, {
+      pack: packName,
+      author: author,
+      quality: 90
+    });
+
+    const output = await sticker.toBuffer();
+
+    if (!output || !output.length) {
+      throw new Error("Sticker metadata generation failed.");
     }
 
     await ctx.sock.sendMessage(
       ctx.jid,
       {
-        sticker: media,
-        packname:
-          packName,
-        author:
-          author
+        sticker: output
       },
       {
-        quoted:
-          ctx.message
+        quoted: ctx.message
       }
     );
+
+    console.log("[TAKE] Sticker created:", {
+      packName,
+      author,
+      size: output.length
+    });
 
     return {
       success: true,
       packName,
       author
     };
+
   } catch (error) {
     console.error(
-      "[TAKE] Error:",
-      error?.stack ||
-        error
+      "[TAKE ERROR]",
+      error?.stack || error
     );
 
     await ctx.send(
-      [
-        "❌ TAKE FAILED",
-        "",
-        "I could not recreate this sticker.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
-      ].join("\n")
+      "❌ TAKE FAILED\n\n" +
+      `${error.message || "Sticker processing failed."}\n\n` +
+      "Verifye si wa-sticker-formatter enstale.\n\n" +
+      "🦁 TECH BY TOPFEROS MD 🐑"
     );
 
     return {
       success: false,
-      error:
-        error?.message ||
-        String(error)
+      error: error.message
     };
   }
 }
 
-registerCommand(
-  "take",
-  takeCommand,
-  {
-    aliases: [
-      "steal"
-    ],
-    description:
-      "Recreate a replied sticker with a custom pack name and author.",
-    usage:
-      ".take [Pack Name | Author]",
-    category:
-      "MEDIA"
-  }
-);
+registerCommand("take", takeCommand, {
+  aliases: ["steal"],
+  description: "Change sticker pack name and author.",
+  usage: ".take Pack Name | Author",
+  category: "MEDIA"
+});
 
 module.exports = {
-  takeCommand
+  takeCommand,
+  getQuotedSticker,
+  downloadSticker
 };
