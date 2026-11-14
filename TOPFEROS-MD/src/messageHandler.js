@@ -97,6 +97,11 @@ const {
   groupStatusCommand
 } = require("../commands/groupstatus");
 
+const {
+  saveCommand,
+  sendCommand
+} = require("../commands/status");
+
 /*
 |--------------------------------------------------------------------------
 | TOPFEROS MD V2.0.0
