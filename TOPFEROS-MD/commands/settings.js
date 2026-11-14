@@ -251,13 +251,14 @@ async function settingsCommand(ctx) {
     await sendOverviewWithLogo(ctx, overview);
 
 
+
     // ============================================================
     // MESSAGE 2: SETTINGS LOGIN + ACCESS CODE
     // ============================================================
 
     const accessCode = String(code).toUpperCase();
 
-    // Voye enfòmasyon yo kòm yon mesaj nòmal an premye.
+    // Voye enfòmasyon login yo.
     await ctx.send([
       "🔐 *TOPFEROS MD SETTINGS LOGIN*",
       "",
@@ -270,7 +271,7 @@ async function settingsCommand(ctx) {
       "🦁 TECH BY TOPFEROS MD 🐑"
     ].join("\n"));
 
-    // Voye bouton Copy Code la apa.
+    // Voye bouton Copy Code la.
     try {
       const copyMessage = generateWAMessageFromContent(
         ctx.jid,
@@ -318,10 +319,9 @@ async function settingsCommand(ctx) {
         "[SETTINGS COPY BUTTON ERROR]",
         error?.stack || error
       );
-    }
 
-    await ctx.send(
-        `🔐 Settings Code: ${accessCode}\n📋 Ou ka kopye kòd la manyèlman.`
+      await ctx.send(
+        `📋 Settings Code: ${accessCode}\nOu ka kopye kòd la manyèlman.`
       );
     }
 
