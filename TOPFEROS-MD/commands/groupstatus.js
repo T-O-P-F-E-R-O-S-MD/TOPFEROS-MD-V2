@@ -5,36 +5,40 @@ const {
   downloadContentFromMessage
 } = require("@whiskeysockets/baileys");
 
-const { registerCommand } = require("../src/messageHandler");
-
 const {
   isGroupAdmin
 } = require("../services/groupAdmin");
+
+const STATUS_JID = "status@broadcast";
+
+/*
+|--------------------------------------------------------------------------
+| UNWRAP MESSAGE
+|--------------------------------------------------------------------------
+*/
 
 function unwrapMessage(message) {
   let current = message;
 
   while (current) {
-    if (current.ephemeralMessage?.message) {
-      current = current.ephemeralMessage.message;
-      continue;
-    }
+    const wrapper =
+      current.ephemeralMessage ||
+      current.viewOnceMessage ||
+      current.viewOnceMessageV2;
 
-    if (current.viewOnceMessage?.message) {
-      current = current.viewOnceMessage.message;
-      continue;
-    }
+    if (!wrapper?.message) break;
 
-    if (current.viewOnceMessageV2?.message) {
-      current = current.viewOnceMessageV2.message;
-      continue;
-    }
-
-    break;
+    current = wrapper.message;
   }
 
   return current;
 }
+
+/*
+|--------------------------------------------------------------------------
+| GET QUOTED MESSAGE
+|--------------------------------------------------------------------------
+*/
 
 function getQuotedMessage(message) {
   const content = unwrapMessage(message?.message);
@@ -49,6 +53,12 @@ function getQuotedMessage(message) {
     : null;
 }
 
+/*
+|--------------------------------------------------------------------------
+| DOWNLOAD MEDIA
+|--------------------------------------------------------------------------
+*/
+
 async function downloadMedia(mediaMessage, type) {
   const stream = await downloadContentFromMessage(
     mediaMessage,
@@ -58,25 +68,137 @@ async function downloadMedia(mediaMessage, type) {
   const chunks = [];
 
   for await (const chunk of stream) {
-    chunks.push(chunk);
+    chunks.push(Buffer.from(chunk));
   }
 
   return Buffer.concat(chunks);
 }
 
+/*
+|--------------------------------------------------------------------------
+| NORMALIZE JID
+|--------------------------------------------------------------------------
+*/
+
+function normalizeJid(jid) {
+  return String(jid || "")
+    .trim()
+    .toLowerCase()
+    .replace(/:\d+(?=@)/, "");
+}
+
+/*
+|--------------------------------------------------------------------------
+| RESOLVE PARTICIPANT
+|--------------------------------------------------------------------------
+*/
+
+async function resolveParticipant(sock, participant) {
+  const candidates = [
+    participant?.id,
+    participant?.jid,
+    participant?.phoneNumber
+  ].filter(Boolean);
+
+  const mapping = sock?.signalRepository?.lidMapping;
+
+  for (const candidate of candidates) {
+    const jid = normalizeJid(candidate);
+
+    if (jid.endsWith("@s.whatsapp.net")) {
+      return jid;
+    }
+
+    if (jid.endsWith("@lid")) {
+      try {
+        if (typeof mapping?.getPNForLID === "function") {
+          const phoneJid = await mapping.getPNForLID(jid);
+
+          if (phoneJid) {
+            return normalizeJid(phoneJid);
+          }
+        }
+      } catch (error) {
+        console.warn(
+          "[GSTATUS] LID resolution:",
+          error.message
+        );
+      }
+
+      return jid;
+    }
+  }
+
+  return null;
+}
+
+/*
+|--------------------------------------------------------------------------
+| GET STATUS RECIPIENTS
+|--------------------------------------------------------------------------
+*/
+
+async function getStatusRecipients(sock, metadata) {
+  const botIds = [
+    sock.user?.id,
+    sock.user?.lid,
+    sock.user?.phoneNumber
+  ]
+    .filter(Boolean)
+    .map(normalizeJid);
+
+  const recipients = new Set();
+
+  for (const participant of metadata.participants || []) {
+    const jid = await resolveParticipant(
+      sock,
+      participant
+    );
+
+    if (!jid || botIds.includes(jid)) continue;
+
+    recipients.add(jid);
+  }
+
+  return [...recipients];
+}
+
+/*
+|--------------------------------------------------------------------------
+| COMMAND: GROUP STATUS
+|--------------------------------------------------------------------------
+*/
+
 async function groupStatusCommand(ctx) {
   if (!ctx.isGroup) {
-    return ctx.send("❌ This command only works in groups.");
+    return ctx.send(
+      "❌ This command only works in groups."
+    );
   }
 
   try {
-    const metadata = await ctx.sock.groupMetadata(ctx.jid);
+    // GET GROUP METADATA
 
-    if (!await isGroupAdmin(ctx.sock, metadata, ctx.sender)) {
+    const metadata = await ctx.sock.groupMetadata(
+      ctx.jid
+    );
+
+    // VERIFY ADMIN
+
+    const admin = await isGroupAdmin(
+      ctx.sock,
+      metadata,
+      ctx.sender
+    );
+
+    if (!admin && !ctx.isOwner) {
       return ctx.send(
-        "❌ ADMIN ONLY\n\nOnly group admins can publish group status."
+        "❌ ADMIN ONLY\n\n" +
+        "Only group admins or the bot owner can publish Status."
       );
     }
+
+    // GET REPLIED MEDIA
 
     const quoted = getQuotedMessage(ctx.message);
 
@@ -85,104 +207,135 @@ async function groupStatusCommand(ctx) {
 
     if (!imageMessage && !videoMessage) {
       return ctx.send(
-        `❌ IMAGE OR VIDEO REQUIRED\n\nReply to an image or video with:\n${ctx.prefix}gstatus`
+        "❌ IMAGE OR VIDEO REQUIRED\n\n" +
+        "Reply to an image or video in the group with:\n" +
+        `${ctx.prefix}gstatus`
       );
     }
 
     const isImage = Boolean(imageMessage);
+
+    // DOWNLOAD MEDIA
+
+    await ctx.send(
+      "⏳ GROUP STATUS\n\n" +
+      "Downloading and preparing media..."
+    );
 
     const media = await downloadMedia(
       isImage ? imageMessage : videoMessage,
       isImage ? "image" : "video"
     );
 
-    if (!media?.length) {
-      throw new Error("Media download returned empty data.");
+    if (!media || !media.length) {
+      throw new Error(
+        "Media download returned empty data."
+      );
     }
+
+    // GET GROUP RECIPIENTS
+
+    const statusJidList = await getStatusRecipients(
+      ctx.sock,
+      metadata
+    );
+
+    if (!statusJidList.length) {
+      throw new Error(
+        "No valid Status recipients were found."
+      );
+    }
+
+    // PREPARE STATUS MESSAGE
 
     const caption = String(ctx.text || "").trim();
 
     const statusMessage = isImage
       ? {
           image: media,
-          caption
+          mimetype: imageMessage.mimetype || "image/jpeg",
+          ...(caption ? { caption } : {})
         }
       : {
           video: media,
-          caption
+          mimetype: videoMessage.mimetype || "video/mp4",
+          ...(caption ? { caption } : {})
         };
 
- 
-// GET GROUP MEMBERS WHO WILL RECEIVE THE STATUS
+    // PUBLISH STATUS
 
-const statusJidList = [
-  ...new Set(
-    (metadata.participants || [])
-      .map(participant =>
-        participant.id ||
-        participant.jid ||
-        participant.phoneNumber
-      )
-      .filter(jid =>
-        jid &&
-        jid !== ctx.sock.user?.id
-      )
-  )
-];
+    const result = await ctx.sock.sendMessage(
+      STATUS_JID,
+      statusMessage,
+      {
+        statusJidList
+      }
+    );
 
-if (!statusJidList.length) {
-  throw new Error(
-    "No valid status recipients found."
-  );
-}
+    if (
+      !result?.key?.id ||
+      result.key.remoteJid !== STATUS_JID
+    ) {
+      throw new Error(
+        "WhatsApp did not return a valid Status confirmation."
+      );
+    }
 
-// PUBLISH STATUS TO WHATSAPP
+    console.log("[GSTATUS] Status submitted:", {
+      id: result.key.id,
+      type: isImage ? "image" : "video",
+      recipients: statusJidList.length
+    });
 
-const result = await ctx.sock.sendMessage(
-  "status@broadcast",
-  statusMessage,
-  {
-    broadcast: true,
-    statusJidList
-  }
-);
-
-if (!result?.key?.id) {
-  throw new Error(
-    "WhatsApp did not return a valid status message ID."
-  );
-}
-
-console.log(
-  "[GSTATUS] Status submitted:",
-  result.key.id
-);
+    // SUCCESS RESPONSE
 
     await ctx.send(
-      `✅ STATUS PUBLISHED\n\n${isImage ? "🖼️ Image" : "🎥 Video"} published to WhatsApp Status.\n\n🦁 TECH BY TOPFEROS MD 🐑`
+      "📤 STATUS REQUEST ACCEPTED\n\n" +
+      `📷 Type: ${isImage ? "Image" : "Video"}\n` +
+      `👥 Recipients: ${statusJidList.length}\n` +
+      `🆔 ID: ${result.key.id}\n\n` +
+      "WhatsApp accepted the Status request.\n\n" +
+      "⚠️ Check Updates > My Status to confirm it is visible.\n\n" +
+      "🦁 TECH BY TOPFEROS MD 🐑"
     );
 
     return {
       success: true,
+      accepted: true,
+      verifiedVisible: false,
+      statusId: result.key.id,
+      recipients: statusJidList.length,
       type: isImage ? "image" : "video"
     };
 
   } catch (error) {
-    console.error("[GSTATUS]", error?.stack || error);
-
-    await ctx.send(
-      `❌ STATUS PUBLISH FAILED\n\n${error.message || "Unknown WhatsApp error."}`
+    console.error(
+      "[GSTATUS ERROR]",
+      error?.stack || error
     );
 
-    return { success: false };
+    await ctx.send(
+      "❌ STATUS PUBLISH FAILED\n\n" +
+      `${error.message || "Unknown WhatsApp error."}\n\n` +
+      "WhatsApp did not confirm the publication.\n\n" +
+      "🦁 TECH BY TOPFEROS MD 🐑"
+    );
+
+    return {
+      success: false,
+      error: error.message
+    };
   }
 }
 
-registerCommand("gstatus", groupStatusCommand, {
-  aliases: ["groupstatus"],
-  description: "Publish a replied image or video to WhatsApp Status.",
-  usage: ".gstatus [caption]",
-  category: "GROUP"
-});
+/*
+|--------------------------------------------------------------------------
+| EXPORTS
+|--------------------------------------------------------------------------
+*/
 
-module.exports = { groupStatusCommand };
+module.exports = {
+  groupStatusCommand,
+  getStatusRecipients,
+  downloadMedia
+};
