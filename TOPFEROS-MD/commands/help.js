@@ -175,10 +175,10 @@ async function helpCommand(ctx) {
       "┃",
       "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯",
       "",
-      "🦁 TECH BY TOPFEROS MD 🐑"
+      "🦁 TECH BY TOPFEROS MD 🐑",
       "",
       "🌐 *Web Connect*",
-      "└──➤ topferos-md-v2.up.railway.app",
+      "└──➤ https://topferos-md-v2.up.railway.app",
       "🌐 *Web Channel*",
       "└──➤ https://whatsapp.com/channel/0029VbDJULz30LKTYe95S91"
     ].join("\n");
