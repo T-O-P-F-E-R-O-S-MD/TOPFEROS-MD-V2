@@ -98,6 +98,10 @@ const {
   playCommand
 } = require("../commands/play");
 
+const {
+  groupStatusCommand
+} = require("../commands/groupstatus");
+
 /*
 |--------------------------------------------------------------------------
 | TOPFEROS MD V2.0.0
@@ -1278,6 +1282,33 @@ registerCommand(
 
     category:
       "MEDIA"
+  }
+);
+
+/*
+|--------------------------------------------------------------------------
+| COMMAND: GSTATUS
+|--------------------------------------------------------------------------
+*/
+
+registerCommand(
+  "gstatus",
+  async (ctx) => {
+    return groupStatusCommand(ctx);
+  },
+  {
+    aliases: [
+      "groupstatus"
+    ],
+
+    description:
+      "Publish a group image or video to WhatsApp Status.",
+
+    usage:
+      ".gstatus",
+
+    category:
+      "GROUP"
   }
 );
 
