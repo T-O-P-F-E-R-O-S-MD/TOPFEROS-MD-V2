@@ -169,6 +169,20 @@ function getCachedMessageKey(sessionId, jid, messageId) {
   return recentMessageKeys.get(cacheId) || null;
 }
 
+function getCachedMessages(sessionId, jid) {
+  const prefix = `${String(sessionId || "")}:${jid}:`;
+  const messages = [];
+
+  for (const [cacheId, value] of recentMessageKeys.entries()) {
+    if (cacheId.startsWith(prefix)) {
+      messages.push({ ...value });
+    }
+  }
+
+  return messages.sort(
+    (a, b) => Number(b.timestamp) - Number(a.timestamp)
+  );
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -2121,6 +2135,8 @@ registerCommand("send", sendCommand, {
 
 module.exports = {
   handleMessage,
+
+  getCachedMessages,
 
   registerCommand,
 
