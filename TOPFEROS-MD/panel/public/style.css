@@ -961,3 +961,47 @@ input[type="file"]::file-selector-button {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
+
+/* =========================================================
+   SCROLL FIX — REMOVE EXTRA SPACE AT BOTTOM
+   ========================================================= */
+
+html,
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100% !important;
+  height: auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.panel-page {
+  min-height: 100vh !important;
+  height: auto !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  overflow: visible !important;
+}
+
+.connect-card {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* MOBILE SCROLL */
+@media (max-width: 600px) {
+  html,
+  body {
+    min-height: 100% !important;
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+
+  .panel-page {
+    min-height: 100vh !important;
+    height: auto !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+}
