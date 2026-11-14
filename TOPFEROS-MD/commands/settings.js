@@ -256,60 +256,43 @@ async function settingsCommand(ctx) {
 
 const accessCode = String(code).toUpperCase();
 
-const loginText = [
-  "🦁✧･ﾟ: *✧･ﾟ:* 🔐 *TOPFEROS MD SETTINGS LOGIN* 🔐 *:･ﾟ✧*:･ﾟ✧🐑",
-  "",
-  "📱 *Bot Session Number*",
-  `╰┈➤ ${sessionId}`,
-  "",
-  "🔐 *6-Character Settings Code*",
-  `╰┈➤ ${accessCode}`,
-  "",
-  "🌐 *Web Settings Panel*",
-  `╰┈➤ ${panelUrl}`,
-  "",
-  "✨ Kòd aksè a dwe rete prive.",
-  "",
-  "🦁 *TECH BY TOPFEROS MD* 🐑"
-].join("\n");
-
-// Voye kòd la kòm mesaj nòmal an premye.
-await ctx.send(loginText);
-
-// Eseye voye bouton Copy Code la apa.
-try {
-  const copyMessage = generateWAMessageFromContent(
-    ctx.jid,
-    {
-      viewOnceMessage: {
-        message: {
-          interactiveMessage:
-            proto.Message.InteractiveMessage.create({
-              body: proto.Message.InteractiveMessage.Body.create({
-                text: "📋 Peze bouton an pou kopye kòd Settings la."
-              }),
-
-              footer: proto.Message.InteractiveMessage.Footer.create({
-                text: "🦁 TECH BY TOPFEROS MD 🐑"
-              }),
-
-              nativeFlowMessage:
-                proto.Message.InteractiveMessage.NativeFlowMessage.create({
-                  buttons: [
-                    {
-                      name: "cta_copy",
-                      buttonParamsJson: JSON.stringify({
-                        display_text: "📋 Copy Settings Code",
-                        copy_code: accessCode
-                      })
-                    }
-                  ]
-                })
-            })
-        }
-      }
+await ctx.sock.sendMessage(ctx.jid, {
+  interactiveMessage: {
+    body: {
+      text: [
+        "🦁✧･ﾟ: *TOPFEROS MD SETTINGS LOGIN* :･ﾟ✧🐑",
+        "",
+        "📱 *Bot Session Number*",
+        `╰┈➤ ${sessionId}`,
+        "",
+        "🔐 *6-Character Settings Code*",
+        `╰┈➤ ${accessCode}`,
+        "",
+        "🌐 *Web Settings Panel*",
+        `╰┈➤ ${panelUrl}`,
+        "",
+        "✨ Kòd aksè a dwe rete prive.",
+        "",
+        "🦁 *TECH BY TOPFEROS MD* 🐑"
+      ].join("\n")
     },
-    {
+    footer: {
+      text: "🦁 TECH BY TOPFEROS MD 🐑"
+    },
+    nativeFlowMessage: {
+      buttons: [
+        {
+          name: "cta_copy",
+          buttonParamsJson: JSON.stringify({
+            display_text: "📋 Copy Settings Code",
+            copy_code: accessCode
+          })
+        }
+      ]
+    }
+  }
+});
+
       userJid: ctx.sock.user.id
     }
   );
