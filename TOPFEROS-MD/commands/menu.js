@@ -188,7 +188,7 @@ function buildMenu(message) {
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
 🌐 Web Connect
-└──➤ https://topferos-md-v2-0-0.onrender.com
+└──➤ topferos-md-v2.up.railway.app
 
 🌐 Web Channel
 └──➤ https://whatsapp.com/channel/0029VbDJULz30LKTYe95S91l
