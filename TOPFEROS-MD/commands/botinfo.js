@@ -26,7 +26,7 @@ async function botInfoCommand(ctx) {
       "🦁 TECH BY TOPFEROS MD 🐑",
       "",
       "🌐 *Web Connect*",
-      "└──➤ https://whatsapp.com/channel/0029VbDJULz30LKTYe95S91",
+      "└──➤ topferos-md-v2.up.railway.app",
       "🌐 *Web Channel*",
       "└──➤ https://whatsapp.com/channel/0029VbDJULz30LKTYe95S91"
     ].join("\n");
