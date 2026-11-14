@@ -6,10 +6,6 @@ const {
 } = require("@whiskeysockets/baileys");
 
 const {
-  registerCommand
-} = require("../src/messageHandler");
-
-const {
   isGroupAdmin
 } = require("../services/groupAdmin");
 
@@ -289,13 +285,6 @@ async function groupStatusCommand(ctx) {
     };
   }
 }
-
-registerCommand("gstatus", groupStatusCommand, {
-  aliases: ["groupstatus"],
-  description: "Publish group image or video to WhatsApp Status.",
-  usage: ".gstatus",
-  category: "GROUP"
-});
 
 module.exports = {
   groupStatusCommand,
