@@ -10,10 +10,9 @@
 </head>
 <body>
 
-
 <!-- SETTINGS BACKGROUND VIDEO -->
 <div class="panel-background">
-  <video id="bgVideo" autoplay loop playsinline>
+  <video id="bgVideo" autoplay loop muted playsinline preload="auto">
     <source src="/panel-background.mp4" type="video/mp4">
   </video>
 </div>
@@ -23,9 +22,9 @@
   id="videoSoundToggle"
   class="video-sound-toggle"
   type="button"
-  aria-label="Fèmen son"
+  aria-label="Aktive son videyo a"
 >
-  🔊
+  🔇
 </button>
 
 
@@ -802,6 +801,34 @@ if (verifiedSessionControls) {
     }
   });
 });
+</script>
+
+<script>
+(() => {
+  const video = document.getElementById("bgVideo");
+  const button = document.getElementById("videoSoundToggle");
+
+  if (!video || !button) return;
+
+  video.muted = true;
+
+  function updateButton() {
+    button.textContent = video.muted ? "🔇" : "🔊";
+    button.setAttribute(
+      "aria-label",
+      video.muted ? "Aktive son videyo a" : "Fèmen son videyo a"
+    );
+  }
+
+  button.addEventListener("click", () => {
+    video.muted = !video.muted;
+    updateButton();
+    video.play().catch(() => {});
+  });
+
+  video.play().catch(() => {});
+  updateButton();
+})();
 </script>
 
 </body>
