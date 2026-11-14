@@ -43,6 +43,11 @@ async function pingCommand(ctx) {
       "📦 Version: V2.0.0",
       "",
       "🦁 TECH BY TOPFEROS MD 🐑"
+      "",
+      "🌐 *Web Connect*",
+      "└──➤ topferos-md-v2.up.railway.app",
+      "🌐 *Web Channel*",
+      "└──➤ https://whatsapp.com/channel/0029VbDJULz30LKTYe95S91"
     ].join("\n");
 
     if (fs.existsSync(logoPath)) {
