@@ -250,49 +250,53 @@ async function settingsCommand(ctx) {
 
     await sendOverviewWithLogo(ctx, overview);
 
+
     // ============================================================
     // MESSAGE 2: SETTINGS LOGIN + ACCESS CODE
     // ============================================================
 
     const accessCode = String(code).toUpperCase();
 
+    // Voye enfòmasyon yo kòm yon mesaj nòmal an premye.
+    await ctx.send([
+      "🔐 *TOPFEROS MD SETTINGS LOGIN*",
+      "",
+      `📱 Session: ${sessionId}`,
+      "",
+      `🔑 Access Code: ${accessCode}`,
+      "",
+      `🌐 Panel: ${panelUrl}`,
+      "",
+      "🦁 TECH BY TOPFEROS MD 🐑"
+    ].join("\n"));
+
+    // Voye bouton Copy Code la apa.
     try {
       const copyMessage = generateWAMessageFromContent(
         ctx.jid,
         {
           viewOnceMessage: {
             message: {
-              interactiveMessage:
-                proto.Message.InteractiveMessage.create({
-                  body:
-                    proto.Message.InteractiveMessage.Body.create({
-                      text: [
-                        "🔐 *TOPFEROS MD SETTINGS LOGIN*",
-                        "",
-                        `📱 Session: ${sessionId}`,
-                        "",
-                        `🔑 Access Code: ${accessCode}`,
-                        "",
-                        `🌐 Panel: ${panelUrl}`
-                      ].join("\n")
-                    }),
-                  footer:
-                    proto.Message.InteractiveMessage.Footer.create({
-                      text: "🦁 TECH BY TOPFEROS MD 🐑"
-                    }),
-                  nativeFlowMessage:
-                    proto.Message.InteractiveMessage.NativeFlowMessage.create({
-                      buttons: [
-                        {
-                          name: "cta_copy",
-                          buttonParamsJson: JSON.stringify({
-                            display_text: "📋 Copy Settings Code",
-                            copy_code: accessCode
-                          })
-                        }
-                      ]
-                    })
-                })
+              messageContextInfo: {},
+              interactiveMessage: {
+                body: {
+                  text: "📋 Peze bouton an pou kopye kòd Settings la."
+                },
+                footer: {
+                  text: "🦁 TOPFEROS MD"
+                },
+                nativeFlowMessage: {
+                  buttons: [
+                    {
+                      name: "cta_copy",
+                      buttonParamsJson: JSON.stringify({
+                        display_text: "Copy Settings Code",
+                        copy_code: accessCode
+                      })
+                    }
+                  ]
+                }
+              }
             }
           }
         },
@@ -309,13 +313,14 @@ async function settingsCommand(ctx) {
         }
       );
 
-    } catch (copyError) {
+    } catch (error) {
       console.error(
         "[SETTINGS COPY BUTTON ERROR]",
-        copyError?.stack || copyError
+        error?.stack || error
       );
+    }
 
-      await ctx.send(
+    await ctx.send(
         `🔐 Settings Code: ${accessCode}\n📋 Ou ka kopye kòd la manyèlman.`
       );
     }
