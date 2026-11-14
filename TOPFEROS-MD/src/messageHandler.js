@@ -89,8 +89,10 @@ const {
   hasSession
 } = require("../services/aiChat");
 
-registerCommand("save", saveCommand, ...);
-registerCommand("send", sendCommand, ...);
+const {
+  saveCommand,
+  sendCommand
+} = require("../commands/status");
 
 const {
   playCommand
@@ -222,13 +224,6 @@ function registerCommand(name, handler, options = {}) {
 
   return commands.get(normalized);
 }
-
-registerCommand("gstatus", groupStatusCommand, {
-  aliases: ["groupstatus"],
-  description: "Publish group image or video to WhatsApp Status.",
-  usage: ".gstatus",
-  category: "GROUP"
-});
 
 /*
 |--------------------------------------------------------------------------
