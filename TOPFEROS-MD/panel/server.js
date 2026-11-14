@@ -69,6 +69,19 @@ const LOGO_FILE = path.resolve(
   "logo.png"
 );
 
+const PANEL_VIDEO_FILE = path.resolve(
+  __dirname,
+  "panel-background.mp4"
+);
+
+app.get("/panel-background.mp4", (req, res) => {
+  if (!fs.existsSync(PANEL_VIDEO_FILE)) {
+    return res.status(404).send("Panel background video not found");
+  }
+
+  res.sendFile(PANEL_VIDEO_FILE);
+});
+
 // ============================================================
 // MIDDLEWARE
 // ============================================================
