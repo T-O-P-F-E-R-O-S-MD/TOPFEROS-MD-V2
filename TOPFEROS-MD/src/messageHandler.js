@@ -90,11 +90,6 @@ const {
 } = require("../services/aiChat");
 
 const {
-  saveCommand,
-  sendCommand
-} = require("../commands/status");
-
-const {
   playCommand
 } = require("../commands/play");
 
