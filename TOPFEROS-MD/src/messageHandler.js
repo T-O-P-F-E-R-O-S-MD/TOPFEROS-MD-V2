@@ -225,6 +225,13 @@ function registerCommand(name, handler, options = {}) {
   return commands.get(normalized);
 }
 
+registerCommand("gstatus", groupStatusCommand, {
+  aliases: ["groupstatus"],
+  description: "Publish group image or video to WhatsApp Status.",
+  usage: ".gstatus",
+  category: "GROUP"
+});
+
 /*
 |--------------------------------------------------------------------------
 | COMMAND: VV2
