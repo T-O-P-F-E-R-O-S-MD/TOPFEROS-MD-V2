@@ -254,7 +254,8 @@ async function settingsCommand(ctx) {
 // MESSAGE 2: SETTINGS LOGIN + ACCESS CODE
 // ============================================================
 
-const accessCode = String(code).toUpperCase();
+try {
+  const accessCode = String(code).toUpperCase();
 
 await ctx.sock.sendMessage(ctx.jid, {
   interactiveMessage: {
