@@ -88,7 +88,8 @@ async function pingCommand(ctx) {
         "",
         "The bot could not calculate the response time.",
         "",
-        "🦁 TECH BY TOPFEROS MD 🐑"
+        "🦁 TECH BY TOPFEROS MD 🐑",
+"",
       ].join("\n")
     );
 
