@@ -13,74 +13,157 @@
   <link rel="stylesheet" href="/style.css">
 
   <style>
-    
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: #07090d;
-}
+    html {
+      width: 100%;
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scroll-behavior: auto;
+    }
 
-.panel-page {
-  position: relative;
-  min-height: 100vh;
-  isolation: isolate;
-}
+    body {
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100svh;
+      height: auto;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      background: #07090d;
+      -webkit-overflow-scrolling: touch;
+    }
 
-.panel-background {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: url("/panel-background.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
+    .panel-page {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100svh;
+      height: auto;
+      isolation: isolate;
+      overflow: visible !important;
+      padding: 30px 15px 90px !important;
+      margin: 0;
+      box-sizing: border-box;
+    }
 
-.connect-card {
-  position: relative;
-  z-index: 1;
-}
+    .panel-background {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background-image: url("/panel-background.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
 
-.connect-title {
-  width: 100%;
-  margin: 8px auto;
-  text-align: center;
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.5;
-  display: block;
-  }
+    .panel-background video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    .video-sound-toggle {
+      position: absolute;
+      right: 15px;
+      bottom: 20px;
+      z-index: 5;
+      width: 46px;
+      height: 46px;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      background: rgba(10,14,22,.85);
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+
+    .connect-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      overflow: visible !important;
+      margin: 0 auto 35px !important;
+      padding-bottom: 40px !important;
+      box-sizing: border-box;
+    }
+
+    .connect-screen {
+      height: auto;
+      min-height: 0;
+      overflow: visible;
+    }
+
+    .connect-title {
+      width: 100%;
+      margin: 8px auto;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.5;
+      display: block;
+    }
+
+    .connect-footer {
+      position: relative;
+      margin-top: 25px;
+      margin-bottom: 30px !important;
+      padding-bottom: 20px;
+    }
+
+    #musicToggle {
+      touch-action: manipulation;
+    }
+
+    @media (max-width: 600px) {
+      .panel-page {
+        padding: 20px 12px 100px !important;
+      }
+
+      .connect-card {
+        margin-bottom: 35px !important;
+        padding-bottom: 45px !important;
+      }
+    }
   </style>
 </head>
+
 <body>
   <main class="panel-page">
-<div class="panel-background">
 
-  <video
-    id="bgVideo"
-    autoplay
-    muted
-    loop
-    playsinline
-    preload="auto"
-    poster="/panel-background.png"
-  >
-    <source src="/panel-background.mp4" type="video/mp4">
-  </video>
+    <div class="panel-background">
+      <video
+        id="bgVideo"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        poster="/panel-background.png"
+      >
+        <source src="/panel-background.mp4" type="video/mp4">
+      </video>
 
-  <button
-    id="videoSoundToggle"
-    class="video-sound-toggle"
-    type="button"
-    aria-label="Aktive son videyo"
-  >
-    🔇
-  </button>
-
-</div>
+      <button
+        id="videoSoundToggle"
+        class="video-sound-toggle"
+        type="button"
+        aria-label="Aktive son videyo"
+      >🔇</button>
+    </div>
 
     <section class="connect-card">
+
       <img
         class="connect-logo"
         src="/assets/logo.png"
@@ -88,10 +171,9 @@ body {
         onerror="this.style.display='none'"
       >
 
-      
-<h1 class="connect-title">
-  🦁 TOPFEROS MD PANEL CONNECTION 🐑
-</h1>
+      <h1 class="connect-title">
+        🦁 TOPFEROS MD PANEL CONNECTION 🐑
+      </h1>
 
       <p class="connect-subtitle">V2.0.0 · CONNECT PANEL</p>
 
@@ -161,6 +243,7 @@ body {
       <footer class="connect-footer">
         🦁 TECH BY TOPFEROS MD 🐑
       </footer>
+
     </section>
   </main>
 
@@ -192,9 +275,9 @@ body {
           copyFailed: "Kopye kòd la manyèlman, tanpri.",
           invalid: "Antre yon nimewo telefòn valab.",
           failed: "Nou pa kapab jenere kòd la. Eseye ankò.",
-          expired: "Kòd la valab pandan {seconds} segonn.",
           back: "← RETOUNEN CHWAZI LANG",
-          choose: "Tanpri chwazi yon lang anvan ou kontinye."
+          choose: "Tanpri chwazi yon lang anvan ou kontinye.",
+          codeHint: "Antre kòd sa a nan WhatsApp pou konekte aparèy la."
         },
         en: {
           title: "🔐 REFERRAL CODE",
@@ -206,9 +289,9 @@ body {
           copyFailed: "Please copy the code manually.",
           invalid: "Enter a valid phone number.",
           failed: "Could not generate the code. Try again.",
-          expired: "Code valid for {seconds} seconds.",
           back: "← BACK TO LANGUAGE",
-          choose: "Please choose a language first."
+          choose: "Please choose a language first.",
+          codeHint: "Enter this code in WhatsApp to link your device."
         },
         fr: {
           title: "🔐 CODE DE PARRAINAGE",
@@ -220,9 +303,9 @@ body {
           copyFailed: "Veuillez copier le code manuellement.",
           invalid: "Entrez un numéro de téléphone valide.",
           failed: "Impossible de générer le code. Réessayez.",
-          expired: "Code valable pendant {seconds} secondes.",
           back: "← RETOUR AUX LANGUES",
-          choose: "Veuillez d'abord choisir une langue."
+          choose: "Veuillez d'abord choisir une langue.",
+          codeHint: "Entrez ce code dans WhatsApp pour connecter votre appareil."
         },
         es: {
           title: "🔐 CÓDIGO DE REFERIDO",
@@ -234,9 +317,9 @@ body {
           copyFailed: "Copia el código manualmente.",
           invalid: "Introduce un número de teléfono válido.",
           failed: "No se pudo generar el código. Inténtalo de nuevo.",
-          expired: "Código válido durante {seconds} segundos.",
           back: "← VOLVER A IDIOMAS",
-          choose: "Selecciona un idioma primero."
+          choose: "Selecciona un idioma primero.",
+          codeHint: "Introduce este código en WhatsApp para vincular tu dispositivo."
         },
         es_do: {
           title: "🔐 CÓDIGO DE REFERIDO",
@@ -248,9 +331,9 @@ body {
           copyFailed: "Copia el código manualmente, por favor.",
           invalid: "Pon un número de teléfono válido.",
           failed: "No se pudo generar el código. Inténtalo otra vez.",
-          expired: "El código vence en {seconds} segundos.",
           back: "← VOLVER A ELEGIR IDIOMA",
-          choose: "Elige un idioma primero."
+          choose: "Elige un idioma primero.",
+          codeHint: "Pon este código en WhatsApp para vincular tu dispositivo."
         },
         pt: {
           title: "🔐 CÓDIGO DE INDICAÇÃO",
@@ -262,9 +345,9 @@ body {
           copyFailed: "Copie o código manualmente, por favor.",
           invalid: "Digite um número de telefone válido.",
           failed: "Não foi possível gerar o código. Tente novamente.",
-          expired: "Código válido por {seconds} segundos.",
           back: "← VOLTAR AOS IDIOMAS",
-          choose: "Escolha um idioma primeiro."
+          choose: "Escolha um idioma primeiro.",
+          codeHint: "Digite este código no WhatsApp para conectar seu dispositivo."
         },
         zh: {
           title: "🔐 推荐码",
@@ -276,9 +359,9 @@ body {
           copyFailed: "请手动复制推荐码。",
           invalid: "请输入有效的电话号码。",
           failed: "无法生成推荐码，请重试。",
-          expired: "推荐码将在 {seconds} 秒后过期。",
           back: "← 返回语言选择",
-          choose: "请先选择一种语言。"
+          choose: "请先选择一种语言。",
+          codeHint: "请在 WhatsApp 中输入此代码以连接设备。"
         }
       };
 
@@ -319,63 +402,58 @@ body {
         statusMessage.textContent = "";
       });
 
-     form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
 
-  const t = translations[selectedLanguage];
-  const number = phoneInput.value.replace(/\D/g, "");
+        const t = translations[selectedLanguage];
+        const number = phoneInput.value.replace(/\D/g, "");
 
-  if (number.length < 8 || number.length > 15) {
-    statusMessage.textContent = t.invalid;
-    return;
-  }
+        if (number.length < 8 || number.length > 15) {
+          statusMessage.textContent = t.invalid;
+          return;
+        }
 
-  generateButton.disabled = true;
-  codeBox.hidden = true;
-  statusMessage.textContent = "";
-  currentCode = "";
+        generateButton.disabled = true;
+        codeBox.hidden = true;
+        statusMessage.textContent = "";
+        currentCode = "";
 
-  try {
-    const response = await fetch("/api/pair", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({
-        number,
-        language: selectedLanguage
-      })
-    });
+        try {
+          const response = await fetch("/api/pair", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({
+              number,
+              language: selectedLanguage
+            })
+          });
 
-    const result = await response.json().catch(() => null);
+          const result = await response.json().catch(() => null);
 
-    if (
-      !response.ok ||
-      !result?.success ||
-      !result?.pairingCode
-    ) {
-      throw new Error(
-        result?.message || t.failed
-      );
-    }
+          if (
+            !response.ok ||
+            !result?.success ||
+            !result?.pairingCode
+          ) {
+            throw new Error(result?.message || t.failed);
+          }
 
-    currentCode = String(result.pairingCode);
-    codeElement.textContent = currentCode;
-    codeBox.hidden = false;
+          currentCode = String(result.pairingCode);
+          codeElement.textContent = currentCode;
+          codeBox.hidden = false;
 
-    expiration.textContent =
-      "Antre kòd sa a nan WhatsApp pou konekte aparèy la.";
+          expiration.textContent = t.codeHint;
+          statusMessage.textContent = result.message || "";
 
-    statusMessage.textContent = result.message || "";
-
-  } catch (error) {
-    statusMessage.textContent =
-      error.message || t.failed;
-  } finally {
-    generateButton.disabled = false;
-  }
-});
+        } catch (error) {
+          statusMessage.textContent = error.message || t.failed;
+        } finally {
+          generateButton.disabled = false;
+        }
+      });
 
       $("copyButton").addEventListener("click", async () => {
         if (!currentCode) return;
@@ -474,41 +552,42 @@ body {
 
       music.addEventListener("play", updateIcon);
       updateIcon();
-
       startMusic();
     })();
   </script>
 
-<script>
-(() => {
-  const video = document.getElementById("bgVideo");
-  const button = document.getElementById("videoSoundToggle");
+  <!-- BACKGROUND VIDEO SOUND -->
+  <script>
+    (() => {
+      const video = document.getElementById("bgVideo");
+      const button = document.getElementById("videoSoundToggle");
 
-  if (!video) return;
+      if (!video) return;
 
-  video.muted = true;
-  video.playsInline = true;
+      video.muted = true;
+      video.playsInline = true;
 
-  video.play().catch(error => {
-    console.warn("Background video autoplay:", error);
-  });
+      video.play().catch(error => {
+        console.warn("Background video autoplay:", error);
+      });
 
-  if (button) {
-    button.addEventListener("click", async () => {
-      video.muted = !video.muted;
+      if (button) {
+        button.addEventListener("click", async () => {
+          video.muted = !video.muted;
 
-      if (video.paused) {
-        try {
-          await video.play();
-        } catch (error) {
-          console.warn("Video play error:", error);
-        }
+          if (video.paused) {
+            try {
+              await video.play();
+            } catch (error) {
+              console.warn("Video play error:", error);
+            }
+          }
+
+          button.textContent = video.muted ? "🔇" : "🔊";
+        });
       }
+    })();
+  </script>
 
-      button.textContent = video.muted ? "🔇" : "🔊";
-    });
-  }
-})();
-</script>
 </body>
 </html>
