@@ -250,43 +250,31 @@ async function settingsCommand(ctx) {
 
     await sendOverviewWithLogo(ctx, overview);
 
-
-
     // ============================================================
-    // MESSAGE 2: SETTINGS LOGIN + ACCESS CODE
+    // MESSAGE 2B: SETTINGS COPY CODE BUTTON
     // ============================================================
 
-    const accessCode = String(code).toUpperCase();
-
-    // Voye enfòmasyon login yo.
-    await ctx.send([
-      "🔐 *TOPFEROS MD SETTINGS LOGIN*",
-      "",
-      `📱 Session: ${sessionId}`,
-      "",
-      `🔑 Access Code: ${accessCode}`,
-      "",
-      `🌐 Panel: ${panelUrl}`,
-      "",
-      "🦁 TECH BY TOPFEROS MD 🐑"
-    ].join("\n"));
-
-    // Voye bouton Copy Code la.
-   
-try {
-  const copyMessage = generateWAMessageFromContent(
-    ctx.jid,
-    {
-      interactiveMessage:
+    try {
+      const interactiveMessage =
         proto.Message.InteractiveMessage.create({
           body:
             proto.Message.InteractiveMessage.Body.create({
-              text: "🔐 Copy your 6-character Settings Code"
+              text: [
+                "🔐 TOPFEROS MD SETTINGS",
+                "",
+                `📱 Session: ${sessionId}`,
+                "",
+                `🔑 Settings Code: ${accessCode}`,
+                "",
+                "👇 Peze bouton anba a pou kopye kòd la."
+              ].join("\n")
             }),
+
           footer:
             proto.Message.InteractiveMessage.Footer.create({
-              text: "🦁 TOPFEROS MD"
+              text: "🦁 TECH BY TOPFEROS MD 🐑"
             }),
+
           nativeFlowMessage:
             proto.Message.InteractiveMessage.NativeFlowMessage.create({
               buttons: [
@@ -299,30 +287,48 @@ try {
                 }
               ]
             })
-        })
-    },
-    {
-      userJid: ctx.sock.user.id
-    }
-  );
+        });
 
-  await ctx.sock.relayMessage(
-    ctx.jid,
-    copyMessage.message,
-    {
-      messageId: copyMessage.key.id
-    }
-  );
-
-} catch (error) {
-  console.error(
-    "[SETTINGS COPY BUTTON ERROR]",
-    error?.stack || error
-  );
-
-      await ctx.send(
-        `📋 Settings Code: ${accessCode}\nOu ka kopye kòd la manyèlman.`
+      const copyMessage = generateWAMessageFromContent(
+        ctx.jid,
+        {
+          viewOnceMessage: {
+            message: {
+              messageContextInfo: {
+                deviceListMetadata: {},
+                deviceListMetadataVersion: 2
+              },
+              interactiveMessage
+            }
+          }
+        },
+        {
+          userJid: ctx.sock.user.id
+        }
       );
+
+      await ctx.sock.relayMessage(
+        ctx.jid,
+        copyMessage.message,
+        {
+          messageId: copyMessage.key.id
+        }
+      );
+
+    } catch (error) {
+      console.error(
+        "[SETTINGS COPY BUTTON ERROR]",
+        error?.stack || error
+      );
+
+      // FALLBACK: SEND THE CODE AS NORMAL TEXT
+      await ctx.send([
+        "📋 *SETTINGS CODE*",
+        "",
+        accessCode,
+        "",
+        "Ou ka kopye kòd la manyèlman."
+      ].join("\n"));
     }
 
     // ============================================================
