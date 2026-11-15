@@ -41,6 +41,11 @@ function unwrapMessageContent(message) {
 function extractText(message) {
   const content = unwrapMessageContent(message);
 
+  // Rekonèt sticker pou Auto React kapab reyaji sou li.
+  if (content.stickerMessage) {
+    return "A WhatsApp sticker";
+  }
+
   return String(
     content.conversation ||
     content.extendedTextMessage?.text ||
