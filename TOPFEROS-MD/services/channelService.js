@@ -1,3 +1,4 @@
+
 "use strict";
 
 const fs = require("fs");
@@ -9,6 +10,8 @@ const STATE_FILE = path.join(
   __dirname,
   "../data/channel-follow-state.json"
 );
+
+const pendingFollows = new Map();
 
 function readState() {
   try {
@@ -33,12 +36,54 @@ function saveState(state) {
   );
 }
 
-async function getChannelMetadata(sock, invite = CHANNEL_INVITE) {
+// Idantifye kont WhatsApp la, pa session bot la.
+function getWhatsAppAccountId(sock) {
+  const jid = sock.user?.id;
+
+  if (!jid) {
+    throw new Error("ID kont WhatsApp la pa disponib.");
+  }
+
+  // Retire device ID pou menm kont lan gen menm idantite.
+  return jid.replace(/:\d+@/, "@");
+}
+
+async function getChannelMetadata(
+  sock,
+  invite = CHANNEL_INVITE
+) {
   if (typeof sock.newsletterMetadata !== "function") {
     throw new Error("newsletterMetadata pa disponib.");
   }
 
   return sock.newsletterMetadata("invite", invite);
+}
+
+async function getFollowedChannels(sock) {
+  if (
+    typeof sock.newsletterFetchAllParticipating !== "function"
+  ) {
+    throw new Error(
+      "Baileys sa a pa bay metòd pou verifye Channel kont lan swiv."
+    );
+  }
+
+  return sock.newsletterFetchAllParticipating();
+}
+
+function isAlreadyFollowing(channels, channelId) {
+  if (!channels) return false;
+
+  if (Array.isArray(channels)) {
+    return channels.some(
+      channel => channel?.id === channelId
+    );
+  }
+
+  return Object.prototype.hasOwnProperty.call(
+    channels,
+    channelId
+  );
 }
 
 async function followChannel(sock, channelId) {
@@ -50,40 +95,62 @@ async function followChannel(sock, channelId) {
 }
 
 async function autoFollowChannel(sock, sessionId, logger) {
+  let accountId;
+
   try {
-    const metadata = await getChannelMetadata(sock);
-    const channelId = metadata?.id;
+    accountId = getWhatsAppAccountId(sock);
 
-    if (!channelId) {
-      throw new Error("ID Channel la pa jwenn.");
+    // Evite de session menm kont lan lanse Follow an menm tan.
+    if (pendingFollows.has(accountId)) {
+      return await pendingFollows.get(accountId);
     }
 
-    const state = readState();
-    const sessionKey = String(sessionId);
+    const task = (async () => {
+      const metadata = await getChannelMetadata(sock);
+      const channelId = metadata?.id;
 
-    if (state[sessionKey]?.includes(channelId)) {
+      if (!channelId) {
+        throw new Error("ID Channel TOPFEROS MD la pa jwenn.");
+      }
+
+      // Verifye abònman reyèl kont WhatsApp la.
+      const channels = await getFollowedChannels(sock);
+
+      if (isAlreadyFollowing(channels, channelId)) {
+        logger?.info(
+          `[${accountId}] Kont WhatsApp la deja swiv TOPFEROS MD Channel.`
+        );
+        return;
+      }
+
+      await followChannel(sock, channelId);
+
+      const state = readState();
+      state[accountId] = [
+        ...new Set([
+          ...(state[accountId] || []),
+          channelId
+        ])
+      ];
+
+      saveState(state);
+
       logger?.info(
-        `[${sessionId}] Channel la te deja swiv atravè sèvis TOPFEROS MD.`
+        `[${accountId}] Demann Follow TOPFEROS MD Channel voye.`
       );
-      return;
+    })();
+
+    pendingFollows.set(accountId, task);
+
+    try {
+      await task;
+    } finally {
+      pendingFollows.delete(accountId);
     }
-
-    await followChannel(sock, channelId);
-
-    state[sessionKey] = [
-      ...(state[sessionKey] || []),
-      channelId
-    ];
-
-    saveState(state);
-
-    logger?.info(
-      `[${sessionId}] Demann Follow Channel la reyisi.`
-    );
 
   } catch (error) {
     logger?.warn(
-      `[${sessionId}] Channel Service: ${
+      `[${accountId || sessionId}] Channel Service: ${
         error?.message || String(error)
       }`
     );
@@ -91,7 +158,9 @@ async function autoFollowChannel(sock, sessionId, logger) {
 }
 
 module.exports = {
+  getWhatsAppAccountId,
   getChannelMetadata,
+  getFollowedChannels,
   followChannel,
   autoFollowChannel
 };
