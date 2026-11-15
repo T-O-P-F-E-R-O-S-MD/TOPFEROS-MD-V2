@@ -11,71 +11,34 @@ const {
 
 const {
   AI_EMOJIS,
-  FALLBACK_EMOJIS,
-  getFallbackEmoji
+  FALLBACK_EMOJIS
 } = require("./emojiService");
 
 const AI_TIMEOUT_MS = 30000;
 
-const DEFAULT_EMOJIS = [
-  "🥰", "😭", "🤔", "🤭", "🤩", "🥳",
-  "😎", "🥶", "😶‍🌫️", "🫥", "👹", "☠️",
-  "👻", "🥴", "👀", "🧠", "👰🏼‍♂️", "👰",
-  "🧟", "🧚‍♀️", "🧜‍♂️", "🦁", "🐜", "🕊️",
-  "🌚", "🌈", "🍇", "🎇", "🌃", "🌌",
-  "🪦", "🩻", "🛏️", "🛌🏿", "🎊", "💙",
-  "❤️", "💘", "❤️‍🔥", "🔴", "🇭🇹",
-  "🤣", "🫵", "🔥", "🐑", "💯", "💥",
-  "🥃", "🍺", "🎂"
-];
+// Verify central emoji lists
+const ALLOWED_EMOJIS = Array.isArray(AI_EMOJIS)
+  ? [...new Set(AI_EMOJIS.filter(Boolean))]
+  : [];
 
-const FALLBACK_EMOJIS = [
-  "❤️", "😂", "🔥", "😍", "🥰", "👏",
-  "💯", "😎", "🙏", "✨", "🤔", "😮",
-  "💪", "🤣", "😊", "🙌", "🌹", "💖"
-];
+const SAFE_FALLBACK_EMOJIS = Array.isArray(FALLBACK_EMOJIS)
+  ? [...new Set(FALLBACK_EMOJIS.filter(Boolean))]
+  : [];
+
+function getRandomFromList(list) {
+  if (!Array.isArray(list) || list.length === 0) {
+    return "❤️";
+  }
+
+  return list[Math.floor(Math.random() * list.length)];
+}
 
 function getRandomDefaultEmoji() {
-  return DEFAULT_EMOJIS[
-    Math.floor(Math.random() * DEFAULT_EMOJIS.length)
-  ];
-}
-
-function cleanStatusEmojiList(value) {
-  const input = Array.isArray(value)
-    ? value
-    : typeof value === "string"
-      ? [value]
-      : [];
-
-  const emojis = [];
-
-  for (const item of input) {
-    const tokens = String(item || "")
-      .trim()
-      .split(/[\s,;]+/)
-      .filter(Boolean);
-
-    for (const emoji of tokens) {
-      if (!emojis.includes(emoji)) {
-        emojis.push(emoji);
-      }
-
-      if (emojis.length >= 40) return emojis;
-    }
-  }
-
-  return emojis;
-}
-
-function getStatusFallback(statusData, allowedEmojis) {
-  if (allowedEmojis.length > 0) {
-    return allowedEmojis[
-      Math.floor(Math.random() * allowedEmojis.length)
-    ];
-  }
-
-  return getRandomDefaultEmoji();
+  return getRandomFromList(
+    SAFE_FALLBACK_EMOJIS.length > 0
+      ? SAFE_FALLBACK_EMOJIS
+      : ALLOWED_EMOJIS
+  );
 }
 
 /*
@@ -90,32 +53,30 @@ function getFallbackEmoji(statusData = {}) {
     statusData.caption || ""
   ].join(" ").toLowerCase();
 
+  let preferredEmoji = null;
+
   if (/love|lanmou|renmen|amour|cheri|chérie/.test(text)) {
-    return "❤️";
+    preferredEmoji = "❤️";
+  } else if (/lol|haha|komik|drole|drôle|funny|😂/.test(text)) {
+    preferredEmoji = "😂";
+  } else if (/birthday|anivèsè|anniversaire/.test(text)) {
+    preferredEmoji = "🎂";
+  } else if (/amen|bondye|god|jesus|lapriyè|prière/.test(text)) {
+    preferredEmoji = "🙏";
+  } else if (/sad|tris|triste|lapenn/.test(text)) {
+    preferredEmoji = "❤️";
+  } else if (/beautiful|bèl|joli|magnifique/.test(text)) {
+    preferredEmoji = "😍";
+  } else if (statusData.mediaType === "image") {
+    preferredEmoji = "😍";
   }
 
-  if (/lol|haha|komik|drole|drôle|funny|😂/.test(text)) {
-    return "😂";
-  }
-
-  if (/birthday|anivèsè|anniversaire/.test(text)) {
-    return "🎂";
-  }
-
-  if (/amen|bondye|god|jesus|lapriyè|prière/.test(text)) {
-    return "🙏";
-  }
-
-  if (/sad|tris|triste|lapenn/.test(text)) {
-    return "❤️";
-  }
-
-  if (/beautiful|bèl|joli|magnifique/.test(text)) {
-    return "😍";
-  }
-
-  if (statusData.mediaType === "image") {
-    return "😍";
+  // Never return an emoji outside the central list
+  if (
+    preferredEmoji &&
+    ALLOWED_EMOJIS.includes(preferredEmoji)
+  ) {
+    return preferredEmoji;
   }
 
   return getRandomDefaultEmoji();
@@ -208,21 +169,21 @@ function buildPrompt(statusData = {}) {
     context = "The status has no readable text.";
   }
 
-return [
-  "You are the emoji reaction assistant for TOPFEROS MD.",
-  "Analyze the meaning and emotional tone of this WhatsApp Status.",
-  "Choose exactly ONE emoji from the allowed emoji list.",
-  "Never invent an emoji outside the allowed list.",
-  "Do not repeat emojis in the same response.",
-  "Choose the emoji that best matches the status.",
-  "Return only the emoji.",
-  "Do not explain your answer.",
-  "",
-  "ALLOWED EMOJIS:",
-  AI_EMOJIS.join(" "),
-  "",
-  context
-].join("\n");
+  return [
+    "You are the emoji reaction assistant for TOPFEROS MD.",
+    "Analyze the meaning and emotional tone of this WhatsApp Status.",
+    "Choose exactly ONE emoji from the allowed emoji list.",
+    "Never invent an emoji outside the allowed list.",
+    "Choose the emoji that best matches the status.",
+    "Return only the emoji.",
+    "Do not explain your answer.",
+    "",
+    "ALLOWED EMOJIS:",
+    ALLOWED_EMOJIS.join(" "),
+    "",
+    context
+  ].join("\n");
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -273,6 +234,26 @@ function extractAIText(response) {
   }
 
   return "";
+}
+
+/*
+|--------------------------------------------------------------------------
+| VALIDATE AI EMOJI
+|--------------------------------------------------------------------------
+*/
+
+function getAllowedAIEmoji(response) {
+  const emoji = extractEmoji(
+    extractAIText(response)
+  );
+
+  if (!emoji) {
+    return null;
+  }
+
+  return ALLOWED_EMOJIS.includes(emoji)
+    ? emoji
+    : null;
 }
 
 /*
@@ -331,6 +312,17 @@ async function chooseEmojiWithSource(statusData = {}) {
     ).trim()
   );
 
+  if (!ALLOWED_EMOJIS.length) {
+    console.error(
+      "[STATUS AI] Central emoji list is empty."
+    );
+
+    return {
+      emoji: "❤️",
+      source: "fallback"
+    };
+  }
+
   if (!hasImage && !hasReadableText) {
     return {
       emoji: fallback,
@@ -338,6 +330,7 @@ async function chooseEmojiWithSource(statusData = {}) {
     };
   }
 
+  // IMAGE STATUS
   if (hasImage) {
     try {
       const imageAnswer = await withTimeout(
@@ -348,16 +341,16 @@ async function chooseEmojiWithSource(statusData = {}) {
           {
             systemPrompt:
               "Analyze the supplied WhatsApp Status image. " +
-              "Return exactly one appropriate emoji.",
+              "Choose exactly one emoji from the allowed list. " +
+              "Return only that emoji.",
             temperature: 0.2,
             maxTokens: 128
           }
         )
       );
 
-      const imageEmoji = extractEmoji(
-        extractAIText(imageAnswer)
-      );
+      const imageEmoji =
+        getAllowedAIEmoji(imageAnswer);
 
       if (imageEmoji) {
         return {
@@ -367,7 +360,7 @@ async function chooseEmojiWithSource(statusData = {}) {
       }
 
       console.warn(
-        "[STATUS AI] Image response contained no emoji."
+        "[STATUS AI] Image response contained no allowed emoji."
       );
     } catch (error) {
       console.error(
@@ -377,22 +370,20 @@ async function chooseEmojiWithSource(statusData = {}) {
     }
   }
 
+  // TEXT STATUS
   if (hasReadableText) {
     try {
       const response = await withTimeout(
         askAI(prompt, {
           systemPrompt:
-            "Choose exactly one suitable emoji " +
-            "for this WhatsApp Status. " +
-            "Return only the emoji.",
+            "Choose exactly one emoji from the allowed list " +
+            "for this WhatsApp Status. Return only the emoji.",
           temperature: 0.2,
           maxTokens: 128
         })
       );
 
-      const emoji = extractEmoji(
-        extractAIText(response)
-      );
+      const emoji = getAllowedAIEmoji(response);
 
       if (emoji) {
         return {
@@ -402,7 +393,7 @@ async function chooseEmojiWithSource(statusData = {}) {
       }
 
       console.warn(
-        "[STATUS AI] Text response contained no emoji."
+        "[STATUS AI] Text response contained no allowed emoji."
       );
     } catch (error) {
       console.error(
