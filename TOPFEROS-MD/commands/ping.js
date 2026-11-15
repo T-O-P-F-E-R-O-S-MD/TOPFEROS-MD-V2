@@ -14,22 +14,19 @@ const {
 
 async function pingCommand(ctx) {
   try {
-    const messageTimestamp =
-      Number(
-        ctx.message?.messageTimestamp || 0
-      );
+    const messageTimestamp = Number(
+      ctx.message?.messageTimestamp || 0
+    );
 
     let responseTime = 0;
 
     if (messageTimestamp > 0) {
       responseTime = Math.max(
         0,
-        Date.now() -
-          messageTimestamp * 1000
+        Date.now() - messageTimestamp * 1000
       );
     }
 
-    
     const logoPath = path.join(
       __dirname,
       "../assets/logo.png"
@@ -42,7 +39,7 @@ async function pingCommand(ctx) {
       "🤖 Bot: TOPFEROS MD",
       "📦 Version: V2.0.0",
       "",
-      "🦁 TECH BY TOPFEROS MD 🐑"
+      "🦁 TECH BY TOPFEROS MD 🐑",
       "",
       "🌐 *Web Connect*",
       "└──➤ topferos-md-v2.up.railway.app",
@@ -51,7 +48,9 @@ async function pingCommand(ctx) {
     ].join("\n");
 
     if (fs.existsSync(logoPath)) {
-      const logo = await fs.promises.readFile(logoPath);
+      const logo = await fs.promises.readFile(
+        logoPath
+      );
 
       await ctx.sock.sendMessage(
         ctx.jid,
@@ -75,29 +74,29 @@ async function pingCommand(ctx) {
       );
     }
 
+    return {
+      success: true,
+      responseTime
+    };
+
   } catch (error) {
     console.error(
       "[PING] Error:",
-      error?.stack ||
-        error
+      error?.stack || error
     );
 
-    await ctx.send(
-      [
-        "❌ PING FAILED",
-        "",
-        "The bot could not calculate the response time.",
-        "",
-        "🦁 TECH BY TOPFEROS MD 🐑",
-"",
-      ].join("\n")
-    );
+    await ctx.send([
+      "❌ PING FAILED",
+      "",
+      "The bot could not calculate the response time.",
+      "",
+      "🦁 TECH BY TOPFEROS MD 🐑"
+    ].join("\n"));
 
     return {
       success: false,
       error:
-        error?.message ||
-        String(error)
+        error?.message || String(error)
     };
   }
 }
@@ -106,15 +105,10 @@ registerCommand(
   "ping",
   pingCommand,
   {
-    aliases: [
-      "p"
-    ],
-    description:
-      "Check bot response time and status.",
-    usage:
-      ".ping",
-    category:
-      "UTILITY"
+    aliases: ["p"],
+    description: "Check bot response time and status.",
+    usage: ".ping",
+    category: "UTILITY"
   }
 );
 
