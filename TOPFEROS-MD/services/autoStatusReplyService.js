@@ -1,6 +1,10 @@
 
 "use strict";
 
+const {
+  isKnownBotJid
+} = require("./statusBotGuard");
+
 /*
 |--------------------------------------------------------------------------
 | TOPFEROS MD V2.0.0
