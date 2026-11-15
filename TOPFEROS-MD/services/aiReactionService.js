@@ -9,6 +9,12 @@ const {
   askAIWithImage
 } = require("./ai");
 
+const {
+  AI_EMOJIS,
+  FALLBACK_EMOJIS,
+  getFallbackEmoji
+} = require("./emojiService");
+
 const AI_TIMEOUT_MS = 30000;
 
 const DEFAULT_EMOJIS = [
@@ -202,17 +208,21 @@ function buildPrompt(statusData = {}) {
     context = "The status has no readable text.";
   }
 
-  return [
-    "You are the emoji reaction assistant for TOPFEROS MD.",
-    "Analyze the meaning and emotional tone of this WhatsApp Status.",
-    "Choose exactly ONE appropriate emoji.",
-    "Do not invent information about media you cannot inspect.",
-    "Return only the emoji.",
-    "Do not explain your answer.",
-    "",
-    context
-  ].join("\n");
-}
+return [
+  "You are the emoji reaction assistant for TOPFEROS MD.",
+  "Analyze the meaning and emotional tone of this WhatsApp Status.",
+  "Choose exactly ONE emoji from the allowed emoji list.",
+  "Never invent an emoji outside the allowed list.",
+  "Do not repeat emojis in the same response.",
+  "Choose the emoji that best matches the status.",
+  "Return only the emoji.",
+  "Do not explain your answer.",
+  "",
+  "ALLOWED EMOJIS:",
+  AI_EMOJIS.join(" "),
+  "",
+  context
+].join("\n");
 
 /*
 |--------------------------------------------------------------------------
