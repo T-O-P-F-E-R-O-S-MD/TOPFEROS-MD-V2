@@ -11,12 +11,13 @@ const {
 
 const {
   AI_EMOJIS,
-  FALLBACK_EMOJIS
+  FALLBACK_EMOJIS,
+  getAIEmojiList,
+  rememberAIEmojis
 } = require("./emojiService");
 
 const AI_TIMEOUT_MS = 30000;
 
-// Verify central emoji lists
 const ALLOWED_EMOJIS = Array.isArray(AI_EMOJIS)
   ? [...new Set(AI_EMOJIS.filter(Boolean))]
   : [];
@@ -24,6 +25,15 @@ const ALLOWED_EMOJIS = Array.isArray(AI_EMOJIS)
 const SAFE_FALLBACK_EMOJIS = Array.isArray(FALLBACK_EMOJIS)
   ? [...new Set(FALLBACK_EMOJIS.filter(Boolean))]
   : [];
+
+function getChatKey(statusData = {}) {
+  return String(
+    statusData.chatId ||
+    statusData.participant ||
+    statusData.sender ||
+    "TOPFEROS_GLOBAL_STATUS"
+  );
+}
 
 function getRandomFromList(list) {
   if (!Array.isArray(list) || list.length === 0) {
@@ -33,11 +43,31 @@ function getRandomFromList(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-function getRandomDefaultEmoji() {
+function getAvailableEmojis(chatId) {
+  const available = getAIEmojiList(chatId);
+
+  return available.length
+    ? available
+    : ALLOWED_EMOJIS;
+}
+
+function rememberSelectedEmoji(chatId, emoji) {
+  if (emoji && ALLOWED_EMOJIS.includes(emoji)) {
+    rememberAIEmojis(chatId, [emoji]);
+  }
+}
+
+function getRandomDefaultEmoji(chatId) {
+  const available = getAvailableEmojis(chatId);
+
+  const fallbackAvailable = SAFE_FALLBACK_EMOJIS.filter(
+    emoji => available.includes(emoji)
+  );
+
   return getRandomFromList(
-    SAFE_FALLBACK_EMOJIS.length > 0
-      ? SAFE_FALLBACK_EMOJIS
-      : ALLOWED_EMOJIS
+    fallbackAvailable.length
+      ? fallbackAvailable
+      : available
   );
 }
 
@@ -48,6 +78,8 @@ function getRandomDefaultEmoji() {
 */
 
 function getFallbackEmoji(statusData = {}) {
+  const chatId = getChatKey(statusData);
+
   const text = [
     statusData.text || "",
     statusData.caption || ""
@@ -71,15 +103,16 @@ function getFallbackEmoji(statusData = {}) {
     preferredEmoji = "😍";
   }
 
-  // Never return an emoji outside the central list
+  const available = getAvailableEmojis(chatId);
+
   if (
     preferredEmoji &&
-    ALLOWED_EMOJIS.includes(preferredEmoji)
+    available.includes(preferredEmoji)
   ) {
     return preferredEmoji;
   }
 
-  return getRandomDefaultEmoji();
+  return getRandomDefaultEmoji(chatId);
 }
 
 /*
@@ -136,7 +169,7 @@ function extractEmoji(text) {
 |--------------------------------------------------------------------------
 */
 
-function buildPrompt(statusData = {}) {
+function buildPrompt(statusData = {}, allowedEmojis = ALLOWED_EMOJIS) {
   const text = String(
     statusData.text ||
     statusData.caption ||
@@ -174,12 +207,12 @@ function buildPrompt(statusData = {}) {
     "Analyze the meaning and emotional tone of this WhatsApp Status.",
     "Choose exactly ONE emoji from the allowed emoji list.",
     "Never invent an emoji outside the allowed list.",
-    "Choose the emoji that best matches the status.",
+    "Do not repeat recently used emojis.",
     "Return only the emoji.",
     "Do not explain your answer.",
     "",
     "ALLOWED EMOJIS:",
-    ALLOWED_EMOJIS.join(" "),
+    allowedEmojis.join(" "),
     "",
     context
   ].join("\n");
@@ -242,7 +275,7 @@ function extractAIText(response) {
 |--------------------------------------------------------------------------
 */
 
-function getAllowedAIEmoji(response) {
+function getAllowedAIEmoji(response, allowedEmojis) {
   const emoji = extractEmoji(
     extractAIText(response)
   );
@@ -251,7 +284,7 @@ function getAllowedAIEmoji(response) {
     return null;
   }
 
-  return ALLOWED_EMOJIS.includes(emoji)
+  return allowedEmojis.includes(emoji)
     ? emoji
     : null;
 }
@@ -296,8 +329,16 @@ async function withTimeout(
 */
 
 async function chooseEmojiWithSource(statusData = {}) {
+  const chatId = getChatKey(statusData);
+
+  let availableEmojis = getAvailableEmojis(chatId);
+
   const fallback = getFallbackEmoji(statusData);
-  const prompt = buildPrompt(statusData);
+
+  const prompt = buildPrompt(
+    statusData,
+    availableEmojis
+  );
 
   const hasImage =
     statusData.mediaType === "image" &&
@@ -324,6 +365,8 @@ async function chooseEmojiWithSource(statusData = {}) {
   }
 
   if (!hasImage && !hasReadableText) {
+    rememberSelectedEmoji(chatId, fallback);
+
     return {
       emoji: fallback,
       source: "fallback"
@@ -349,10 +392,14 @@ async function chooseEmojiWithSource(statusData = {}) {
         )
       );
 
-      const imageEmoji =
-        getAllowedAIEmoji(imageAnswer);
+      const imageEmoji = getAllowedAIEmoji(
+        imageAnswer,
+        availableEmojis
+      );
 
       if (imageEmoji) {
+        rememberSelectedEmoji(chatId, imageEmoji);
+
         return {
           emoji: imageEmoji,
           source: "gemini-image"
@@ -383,9 +430,14 @@ async function chooseEmojiWithSource(statusData = {}) {
         })
       );
 
-      const emoji = getAllowedAIEmoji(response);
+      const emoji = getAllowedAIEmoji(
+        response,
+        availableEmojis
+      );
 
       if (emoji) {
+        rememberSelectedEmoji(chatId, emoji);
+
         return {
           emoji,
           source: "gemini"
@@ -403,8 +455,17 @@ async function chooseEmojiWithSource(statusData = {}) {
     }
   }
 
+  // Refresh list in case another status used an emoji meanwhile.
+  availableEmojis = getAvailableEmojis(chatId);
+
+  const safeFallback = availableEmojis.includes(fallback)
+    ? fallback
+    : getRandomDefaultEmoji(chatId);
+
+  rememberSelectedEmoji(chatId, safeFallback);
+
   return {
-    emoji: fallback,
+    emoji: safeFallback,
     source: "fallback"
   };
 }
