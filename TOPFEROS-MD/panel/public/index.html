@@ -55,18 +55,29 @@ body {
 </head>
 <body>
   <main class="panel-page">
-    <div class="panel-background">
+<div class="panel-background">
 
-<button id="videoSoundToggle"
-        class="video-sound-toggle"
-        type="button"
-        aria-label="Fèmen son">
-  🔊
-</button>
-
-  <video id="bgVideo" autoplay loop playsinline preload="auto">
+  <video
+    id="bgVideo"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="auto"
+    poster="/panel-background.png"
+  >
     <source src="/panel-background.mp4" type="video/mp4">
   </video>
+
+  <button
+    id="videoSoundToggle"
+    class="video-sound-toggle"
+    type="button"
+    aria-label="Aktive son videyo"
+  >
+    🔇
+  </button>
+
 </div>
 
     <section class="connect-card">
@@ -467,5 +478,37 @@ body {
       startMusic();
     })();
   </script>
+
+<script>
+(() => {
+  const video = document.getElementById("bgVideo");
+  const button = document.getElementById("videoSoundToggle");
+
+  if (!video) return;
+
+  video.muted = true;
+  video.playsInline = true;
+
+  video.play().catch(error => {
+    console.warn("Background video autoplay:", error);
+  });
+
+  if (button) {
+    button.addEventListener("click", async () => {
+      video.muted = !video.muted;
+
+      if (video.paused) {
+        try {
+          await video.play();
+        } catch (error) {
+          console.warn("Video play error:", error);
+        }
+      }
+
+      button.textContent = video.muted ? "🔇" : "🔊";
+    });
+  }
+})();
+</script>
 </body>
 </html>
