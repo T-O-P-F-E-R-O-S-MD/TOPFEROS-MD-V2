@@ -1989,3 +1989,73 @@ async function copyPairingCode() {
     initialize();
   }
 })();
+
+/* ==========================================
+   TOPFEROS MD — FINAL SCROLL FIX
+========================================== */
+
+html {
+  width: 100%;
+  min-height: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: auto;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.panel-page {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  height: auto;
+  overflow: visible !important;
+  padding: 30px 15px 80px !important;
+  margin: 0;
+}
+
+.connect-card {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  overflow: visible !important;
+  margin: 0 auto 35px !important;
+  padding-bottom: 35px !important;
+}
+
+.connect-screen {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.connect-footer,
+.panel-footer {
+  position: relative;
+  margin-top: 25px;
+  margin-bottom: 30px !important;
+  padding-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .panel-page {
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: 20px 12px 90px !important;
+  }
+
+  .connect-card {
+    margin-bottom: 35px !important;
+    padding-bottom: 40px !important;
+  }
+}
