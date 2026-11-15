@@ -1226,7 +1226,7 @@ logger.info(
   `[${sessionId}] 🟢 TOPFEROS MD V2.0.0 connected.`
 );
 
-void autoFollowTopferosChannel(sock, sessionId);
+void autoFollowChannel(sock, sessionId, logger);
 
 logger.info(
   `[${sessionId}] Automations: ` +
