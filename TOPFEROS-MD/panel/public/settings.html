@@ -27,7 +27,6 @@
   🔇
 </button>
 
-
 <main class="panel-page">
 <section class="panel-card">
 
@@ -49,14 +48,15 @@
     </h1>
 
     <p class="panel-version">V2.0.0</p>
-<div
-  id="verificationPreviewStatus"
-  class="verification-preview-status disconnected"
-  role="status"
-  aria-live="polite"
->
-  🔴 DISCONNECTED
-</div>
+
+    <div
+      id="verificationPreviewStatus"
+      class="verification-preview-status disconnected"
+      role="status"
+      aria-live="polite"
+    >
+      🔴 DISCONNECTED
+    </div>
   </header>
 
   <!-- FIRST INTERFACE: LANGUAGE -->
@@ -89,18 +89,19 @@
     </div>
 
     <div class="field-group">
-     <label for="verificationNumber" data-i18n="number">
-  NUMBER
-</label>
+      <label for="verificationNumber" data-i18n="number">
+        NUMBER
+      </label>
 
       <input
-  id="verificationNumber"
-  type="text"
-  inputmode="tel"
-  autocomplete="off"
-  placeholder="WhatsApp number"
->
+        id="verificationNumber"
+        type="text"
+        inputmode="tel"
+        autocomplete="off"
+        placeholder="WhatsApp number"
+      >
     </div>
+
     <div class="field-group">
       <label for="verificationCode" data-i18n="code">
         CODE
@@ -122,7 +123,6 @@
     >
       🔐 VERIFY
     </button>
-
   </section>
 
   <!-- INTRODUCTION: FIRST INTERFACE ONLY -->
@@ -141,35 +141,37 @@
 
   <!-- SECOND INTERFACE: HIDDEN UNTIL VERIFIED -->
   <div id="settingsContent" hidden>
-<div class="session-control-row" id="verifiedSessionControls" hidden>
 
-  <button
-    type="button"
-    id="reconnectButton"
-    class="session-control connect"
-    data-action="reconnect"
-  >
-    🟢 CONNECTED
-  </button>
+    <div class="session-control-row" id="verifiedSessionControls" hidden>
 
-  <button
-    type="button"
-    id="disconnectButton"
-    class="session-control disconnect"
-    data-action="disconnect"
-  >
-    🔴 DISCONNECTED
-  </button>
+      <button
+        type="button"
+        id="reconnectButton"
+        class="session-control connect"
+        data-action="reconnect"
+      >
+        🟢 CONNECTED
+      </button>
 
-  <button
-    type="button"
-    id="exitPanelButton"
-    class="session-control exit"
-  >
-    🟠 EXIT PANEL
-  </button>
+      <button
+        type="button"
+        id="disconnectButton"
+        class="session-control disconnect"
+        data-action="disconnect"
+      >
+        🔴 DISCONNECTED
+      </button>
 
-</div>
+      <button
+        type="button"
+        id="exitPanelButton"
+        class="session-control exit"
+      >
+        🟠 EXIT PANEL
+      </button>
+
+    </div>
+
     <!-- BASIC INFO -->
     <section class="panel-section">
       <div class="section-title" data-i18n="basic_info">
@@ -301,22 +303,21 @@
         </label>
       </div>
 
-<div class="field-group">
-  <label for="statusReplyEmojis">
-    STATUS REPLY EMOJIS
-  </label>
+      <div class="field-group">
+        <label for="statusReplyEmojis">
+          STATUS REPLY EMOJIS
+        </label>
 
-  <textarea
-    id="statusReplyEmojis"
-    rows="3"
-    placeholder="Enter your preferred emojis"
-  ></textarea>
+        <textarea
+          id="statusReplyEmojis"
+          rows="3"
+          placeholder="Enter your preferred emojis"
+        ></textarea>
 
-  <small>
-    Maximum 40 emojis
-  </small>
-</div>
-
+        <small>
+          Maximum 40 emojis
+        </small>
+      </div>
 
       <!-- AUTO REACT -->
       <div class="switch-row">
@@ -378,22 +379,22 @@
         </select>
       </div>
 
-<div class="field-group">
-  <label for="antiCallExceptionNumbers">
-    ANTI-CALL EXCEPTIONS
-  </label>
+      <div class="field-group">
+        <label for="antiCallExceptionNumbers">
+          ANTI-CALL EXCEPTIONS
+        </label>
 
-  <textarea
-    id="antiCallExceptionNumbers"
-    rows="3"
-    placeholder="Example: 509XXXXXXXX, 1555XXXXXXX&#10;Separate numbers with commas or new lines."
-  ></textarea>
+        <textarea
+          id="antiCallExceptionNumbers"
+          rows="3"
+          placeholder="Example: 509XXXXXXXX, 1555XXXXXXX&#10;Separate numbers with commas or new lines."
+        ></textarea>
 
-  <small>
-    These numbers will be allowed to call the bot even when Anti-Call is enabled.
-    Include the country code without the + sign.
-  </small>
-</div>
+        <small>
+          These numbers will be allowed to call the bot even when Anti-Call is enabled.
+          Include the country code without the + sign.
+        </small>
+      </div>
 
       <!-- ANTI BUG -->
       <div class="switch-row">
@@ -404,107 +405,107 @@
         </label>
       </div>
     </section>
-    
+
     <!-- ANTI-BOT SYSTEM -->
-<section class="panel-section">
-  <div class="section-title">🤖 ANTI-BOT SYSTEM</div>
+    <section class="panel-section">
+      <div class="section-title">🤖 ANTI-BOT SYSTEM</div>
 
-  <!-- ANTI-BOT MODE -->
-  <div class="field-group">
-    <label for="antiBotMode">ANTI-BOT MODE</label>
-    <select id="antiBotMode">
-  <option value="groups">Groups Only</option>
-  <option value="private">Private Messages Only</option>
-  <option value="both" selected>Both</option>
-</select>
-    <small>
-      Anti-Bot monitoring works in WhatsApp groups where TOPFEROS MD is an administrator.
-    </small>
-  </div>
+      <!-- ANTI-BOT MODE -->
+      <div class="field-group">
+        <label for="antiBotMode">ANTI-BOT MODE</label>
+        <select id="antiBotMode">
+          <option value="groups">Groups Only</option>
+          <option value="private">Private Messages Only</option>
+          <option value="both" selected>Both</option>
+        </select>
 
-  <!-- BOT DETECTION -->
-  <div class="switch-row">
-    <span>Bot Detection</span>
-    <label class="switch">
-      <input id="botDetection" type="checkbox">
-      <span class="slider"></span>
-    </label>
-  </div>
+        <small>
+          Anti-Bot monitoring works in WhatsApp groups where TOPFEROS MD is an administrator.
+        </small>
+      </div>
 
-  <!-- AUTO SCAN -->
-  <div class="switch-row">
-    <span>Auto Scan</span>
-    <label class="switch">
-      <input id="autoScan" type="checkbox">
-      <span class="slider"></span>
-    </label>
-  </div>
+      <!-- BOT DETECTION -->
+      <div class="switch-row">
+        <span>Bot Detection</span>
+        <label class="switch">
+          <input id="botDetection" type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
 
-  <!-- BOT SCORE -->
-  <div class="switch-row">
-    <span>Bot Score</span>
-    <label class="switch">
-      <input id="botScore" type="checkbox">
-      <span class="slider"></span>
-    </label>
-  </div>
+      <!-- AUTO SCAN -->
+      <div class="switch-row">
+        <span>Auto Scan</span>
+        <label class="switch">
+          <input id="autoScan" type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
 
-  <!-- ADMIN NOTIFICATION -->
-  <div class="switch-row">
-    <span>Admin Notification</span>
-    <label class="switch">
-      <input id="adminNotification" type="checkbox">
-      <span class="slider"></span>
-    </label>
-  </div>
+      <!-- BOT SCORE -->
+      <div class="switch-row">
+        <span>Bot Score</span>
+        <label class="switch">
+          <input id="botScore" type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
 
-  <!-- AUTO KICK -->
-  <div class="switch-row">
-    <span>Auto Kick</span>
-    <label class="switch">
-      <input id="autoKick" type="checkbox">
-      <span class="slider"></span>
-    </label>
-  </div>
+      <!-- ADMIN NOTIFICATION -->
+      <div class="switch-row">
+        <span>Admin Notification</span>
+        <label class="switch">
+          <input id="adminNotification" type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
 
-  <!-- ANTI-BOT FILTER -->
-  <div class="switch-row">
-    <span>Anti-Bot Filter</span>
-    <label class="switch">
-      <input id="antiBotFilter" type="checkbox">
-      <span class="slider"></span>
-    </label>
-  </div>
+      <!-- AUTO KICK -->
+      <div class="switch-row">
+        <span>Auto Kick</span>
+        <label class="switch">
+          <input id="autoKick" type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
 
-  <!-- ANTI-BOT ACTION -->
-  <div class="field-group">
-    <label for="antiBotAction">ANTI-BOT ACTION</label>
-    <select id="antiBotAction">
-  <option value="Delete">Delete</option>
-  <option value="Warn" selected>Warn</option>
-  <option value="Block">Block (remove from group)</option>
-</select>
-  </div>
+      <!-- ANTI-BOT FILTER -->
+      <div class="switch-row">
+        <span>Anti-Bot Filter</span>
+        <label class="switch">
+          <input id="antiBotFilter" type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
 
-  <!-- ANTI-BOT EXEMPTION LIST -->
-  <div class="field-group">
-    <label for="antiBlockNumbers">
-      ANTI-BOT EXEMPTION LIST
-    </label>
+      <!-- ANTI-BOT ACTION -->
+      <div class="field-group">
+        <label for="antiBotAction">ANTI-BOT ACTION</label>
+        <select id="antiBotAction">
+          <option value="Delete">Delete</option>
+          <option value="Warn" selected>Warn</option>
+          <option value="Block">Block (remove from group)</option>
+        </select>
+      </div>
 
-    <textarea
-      id="antiBlockNumbers"
-      rows="5"
-      placeholder="Enter WhatsApp numbers, one per line&#10;Example: 509XXXXXXXX"
-    ></textarea>
+      <!-- ANTI-BOT EXEMPTION LIST -->
+      <div class="field-group">
+        <label for="antiBlockNumbers">
+          ANTI-BOT EXEMPTION LIST
+        </label>
 
-    <small>
-      Numbers listed here will be excluded from Anti-Bot actions.
-    </small>
-  </div>
+        <textarea
+          id="antiBlockNumbers"
+          rows="5"
+          placeholder="Enter WhatsApp numbers, one per line&#10;Example: 509XXXXXXXX"
+        ></textarea>
 
-</section>
-<!-- END ANTI-BOT SYSTEM -->
+        <small>
+          Numbers listed here will be excluded from Anti-Bot actions.
+        </small>
+      </div>
+    </section>
+    <!-- END ANTI-BOT SYSTEM -->
 
     <!-- GROUP AUTOMATIONS -->
     <section class="panel-section">
@@ -623,8 +624,11 @@
 <!-- APP -->
 <script src="/app.js"></script>
 
+<!-- SESSION VERIFICATION -->
 <script>
 (() => {
+  "use strict";
+
   const verifyButton =
     document.getElementById("verifyButton");
 
@@ -654,29 +658,34 @@
     return;
   }
 
+  function notify(message, type = "error") {
+    if (
+      typeof window.TOPFEROS?.notify === "function"
+    ) {
+      window.TOPFEROS.notify(message, type);
+    } else {
+      alert(message);
+    }
+  }
+
   verifyButton.addEventListener("click", async (event) => {
     event.preventDefault();
 
     if (verifyButton.disabled) return;
 
-    const number = numberInput?.value.trim();
-    const code = codeInput?.value.trim();
+    const number = numberInput?.value.trim() || "";
+    const code = codeInput?.value.trim() || "";
 
     if (!number || !code) {
-      window.TOPFEROS?.notify(
-        "NUMBER and CODE are required.",
-        "error"
-      );
+      notify("NUMBER and CODE are required.", "error");
       return;
     }
 
     if (
-      typeof window.TOPFEROS?.verifyNumberAndCode !==
-      "function"
+      typeof window.TOPFEROS?.verifyNumberAndCode !== "function"
     ) {
       console.error("Verification function unavailable");
-
-      alert("Verification service is unavailable.");
+      notify("Verification service is unavailable.", "error");
       return;
     }
 
@@ -690,8 +699,11 @@
           code
         );
 
-      if (!success) return;
+      if (!success) {
+        return;
+      }
 
+      // OPEN SETTINGS AFTER SUCCESSFUL VERIFICATION
       if (settingsContent) {
         settingsContent.hidden = false;
       }
@@ -712,17 +724,28 @@
         sessionControls.hidden = false;
       }
 
-      try {
-        await window.TOPFEROS.loadSettings();
-      } catch (error) {
-        console.error("Settings loading error:", error);
+      // LOAD SETTINGS
+      if (
+        typeof window.TOPFEROS.loadSettings === "function"
+      ) {
+        try {
+          await window.TOPFEROS.loadSettings();
+        } catch (error) {
+          console.error("Settings loading error:", error);
+
+          notify(
+            "Settings opened, but some settings could not load: " +
+            (error?.message || "Unknown error"),
+            "error"
+          );
+        }
       }
 
     } catch (error) {
       console.error("VERIFY ERROR:", error);
 
-      window.TOPFEROS.notify(
-        error.message || "Verification failed.",
+      notify(
+        error?.message || "Verification failed.",
         "error"
       );
 
@@ -735,98 +758,44 @@
 })();
 </script>
 
-    verifyButton.disabled = true;
-    verifyButton.textContent = "VERIFYING...";
-
-    try {
-    const success =
-  await window.TOPFEROS.verifyNumberAndCode(number, code);
-
-if (!success) return;
-
-// Ouvri entèfas fonksyon yo apre verifikasyon reyisi.
-if (settingsContent) {
-  settingsContent.hidden = false;
-}
-
-if (verificationPreviewStatus) {
-  verificationPreviewStatus.hidden = true;
-}
-
-if (verifiedSessionControls) {
-  verifiedSessionControls.hidden = false;
-}
-
-if (verificationSection) {
-  verificationSection.hidden = true;
-}
-
-if (panelIntroduction) {
-  panelIntroduction.hidden = true;
-}
-
-// Chaje paramèt yo san bloke ouvèti entèfas la.
-if (typeof window.TOPFEROS.loadSettings === "function") {
-  try {
-    await window.TOPFEROS.loadSettings();
-  } catch (error) {
-    window.TOPFEROS.notify(
-      "Settings opened, but some settings could not load: " +
-      (error?.message || "Unknown error"),
-      "error"
-    );
-  }
-}
-
-if (verifiedSessionControls) {
-  verifiedSessionControls.hidden = false;
-}
-
-      if (verificationSection) {
-        verificationSection.hidden = true;
-      }
-
-      if (panelIntroduction) {
-        panelIntroduction.hidden = true;
-      }
-
-    } catch (error) {
-      window.TOPFEROS?.notify(
-        error?.message || "Verification failed.",
-        "error"
-      );
-    } finally {
-      verifyButton.disabled = false;
-      verifyButton.textContent = "🔐 VERIFY";
-    }
-  });
-});
-</script>
-
+<!-- BACKGROUND VIDEO SOUND CONTROL -->
 <script>
 (() => {
-  const video = document.getElementById("bgVideo");
-  const button = document.getElementById("videoSoundToggle");
+  "use strict";
+
+  const video =
+    document.getElementById("bgVideo");
+
+  const button =
+    document.getElementById("videoSoundToggle");
 
   if (!video || !button) return;
 
+  // START MUTED
   video.muted = true;
 
   function updateButton() {
     button.textContent = video.muted ? "🔇" : "🔊";
+
     button.setAttribute(
       "aria-label",
-      video.muted ? "Aktive son videyo a" : "Fèmen son videyo a"
+      video.muted
+        ? "Aktive son videyo a"
+        : "Fèmen son videyo a"
     );
   }
 
   button.addEventListener("click", () => {
     video.muted = !video.muted;
+
     updateButton();
+
     video.play().catch(() => {});
   });
 
+  // ATTEMPT AUTOPLAY
   video.play().catch(() => {});
+
   updateButton();
 })();
 </script>
