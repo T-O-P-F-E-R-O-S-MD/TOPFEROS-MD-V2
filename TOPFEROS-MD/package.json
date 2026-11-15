@@ -24,6 +24,7 @@
   "author": "TOPFEROS MD",
   "license": "MIT",
   "dependencies": {
+  "wa-sticker-formatter": "^1.1.3",
   "@whiskeysockets/baileys": "7.0.0-rc14",
     "@google/genai": "^1.21.0",
     "axios": "^1.7.9",
