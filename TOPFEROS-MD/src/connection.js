@@ -27,6 +27,9 @@ const {
   deleteNeonAuthState
 } = require("../services/neonAuthState");
 
+const {
+  autoFollowChannel
+} = require("../services/channelService");
 
 const config = require("./config");
 
